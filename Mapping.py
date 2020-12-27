@@ -6,42 +6,26 @@ import time
 
 class Map:
     """
-    Class that uses Json file path of waypoints, boundary vertexes, and obstacles
+    Class that uses Json file path of boundaries and obstacles
     to create a environment space
     """
-    def __init__(self, resolution, mission_data, buffer):
+    def __init__(self, resolution, boundarypoints, obstacles, buffer):
         """
         Initialize grid map for a star planning
 
         resolution: grid resolution [m]
-        rr: robot radius[m]
-        mission_data: path to json file mission data
+        boundarypoints: list of points that make up a polygonal fence
+        obstacles: list of points and respective radiuses 
+        buffer: buffer around obstacles
         """ 
-        file = json.load(open(mission_data, 'rb'))
-        self.waypoints = []
-        self.boundarypoints = []
-        self.obstacles = []
-
-        for waypoint in file["waypoints"]:
-            self.waypoints += [[waypoint["latitude"],
-                           waypoint["longitude"], waypoint["altitude"]]]
-
-        for boundarypoint in file["boundaryPoints"]:
-            self.boundarypoints += [[boundarypoint["latitude"],
-                                boundarypoint["longitude"]]]
-        self.boundarypoints.append(self.boundarypoints[0])
-
-        for obstacle in file["obstacles"]:
-            self.obstacles += [[obstacle["latitude"],
-                            obstacle["longitude"], obstacle["radius"]]]
-        self.map_lon_width, self.map_lat_width = 0, 0
-        self.max_lat, self.max_lon = 0, 0
-        self.min_lat, self.min_lon = 0, 0
-        self.resolution = resolution                    # resolution
-        self.calc_grid_bounds(self.boundarypoints)
-        self.buffer = buffer                            # creates a "buffer" around obstacles
-        self.obstacle_map = None                        # map of obstacles
-        self.calc_obstacle_map(self.obstacles, self.boundarypoints, buffer)       # creates map of obstacles and boundaries
+        self.map_lon_width, self.map_lat_width = 0, 0                   # widths of obstacle map
+        self.max_lat, self.max_lon = 0, 0                               # max lat, max lon
+        self.min_lat, self.min_lon = 0, 0                               # min lat, min lon
+        self.resolution = resolution                                    # resolution
+        self.buffer = buffer                                            # buffer
+        self.calc_grid_bounds(boundarypoints)                           # finds values for max, min, and widths of lon and lat
+        self.obstacle_map = None                                        # map of obstacles (initialized to none)
+        self.calc_obstacle_map(obstacles, boundarypoints, buffer)       # creates map of obstacles and boundaries, stores it into a 2D list in obstacle_map
 
 
     def transform_to_real_position(self, index, min_index):

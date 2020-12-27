@@ -7,9 +7,24 @@ import time
 class PathPlanner:
     def __init__(self, resolution, mission_data, buffer):
         start_time = time.time()
-        self.map = Map(resolution, mission_data, buffer)
-        print(f"mapping time: {time.time() - start_time}")
+        file = json.load(open(mission_data, 'rb'))
         self.waypoints = []
+        boundarypoints = []
+        obstacles = []
+        for waypoint in file["waypoints"]:
+                self.waypoints += [[waypoint["latitude"],
+                                    waypoint["longitude"], waypoint["altitude"]]]
+
+        for boundarypoint in file["boundaryPoints"]:
+            boundarypoints += [[boundarypoint["latitude"],
+                                boundarypoint["longitude"]]]
+        boundarypoints.append(boundarypoints[0])
+
+        for obstacle in file["obstacles"]:
+            obstacles += [[obstacle["latitude"],
+                            obstacle["longitude"], obstacle["radius"]]]
+        self.map = Map(resolution, boundarypoints, obstacles, buffer)
+        print(f"mapping time: {time.time() - start_time}")
         self.motion = [[1, 0, 1],                  #[x direction, y direction, cost]
                         [0, 1, 1],
                         [-1, 0, 1],
@@ -18,7 +33,7 @@ class PathPlanner:
                         [-1, 1, math.sqrt(2)],
                         [1, -1, math.sqrt(2)],
                         [1, 1, math.sqrt(2)]]
-        self.calc_path
+
         
     class Node:
         def __init__(self, lat, lon, cost, parent_index):
@@ -91,10 +106,10 @@ class PathPlanner:
     def calc_path(self):
         finalpathx = []
         finalpathy = []
-        for i in range(len(self.map.waypoints) - 1):
+        for i in range(len(self.waypoints) - 1):
             start_time = time.time()
-            start_node = self.Node(self.map.transform_to_map_position(self.map.waypoints[i][0], self.map.min_lat), self.map.transform_to_map_position(self.map.waypoints[i][1], self.map.min_lon), 0.0, -1)
-            goal_node = self.Node(self.map.transform_to_map_position(self.map.waypoints[i + 1][0], self.map.min_lat), self.map.transform_to_map_position(self.map.waypoints[i + 1][1], self.map.min_lon), 0.0, -1)
+            start_node = self.Node(self.map.transform_to_map_position(self.waypoints[i][0], self.map.min_lat), self.map.transform_to_map_position(self.waypoints[i][1], self.map.min_lon), 0.0, -1)
+            goal_node = self.Node(self.map.transform_to_map_position(self.waypoints[i + 1][0], self.map.min_lat), self.map.transform_to_map_position(self.waypoints[i + 1][1], self.map.min_lon), 0.0, -1)
             x, y = self.a_star(start_node, goal_node)
             ex, ey = self.calc_critical_nodes(x,y)
             fx, fy = self.calc_smooth_line(ex, ey)
@@ -108,8 +123,8 @@ class PathPlanner:
     # def calc_path(self):
     #     finalpathx = []
     #     finalpathy = []
-    #     start_node = self.Node(self.map.transform_to_map_position(self.map.waypoints[0][0], self.map.min_lat), self.map.transform_to_map_position(self.map.waypoints[0][1], self.map.min_lon), 0.0, -1)
-    #     goal_node = self.Node(self.map.transform_to_map_position(self.map.waypoints[1][0], self.map.min_lat), self.map.transform_to_map_position(self.map.waypoints[1][1], self.map.min_lon), 0.0, -1)
+    #     start_node = self.Node(self.map.transform_to_map_position(self.waypoints[0][0], self.map.min_lat), self.map.transform_to_map_position(self.waypoints[0][1], self.map.min_lon), 0.0, -1)
+    #     goal_node = self.Node(self.map.transform_to_map_position(self.waypoints[1][0], self.map.min_lat), self.map.transform_to_map_position(self.waypoints[1][1], self.map.min_lon), 0.0, -1)
     #     x, y = self.a_star(start_node, goal_node)
     #     ex, ey = self.calc_critical_nodes(x,y)
     #     fx, fy = self.calc_smooth_line(ex, ey)
