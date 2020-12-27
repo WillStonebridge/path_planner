@@ -1,0 +1,11 @@
+# remove saved changes
+__pycache__/
+
+# Ignore settings file
+.vscode/
+
+# Ignore python execution files
+*.pyc
+venv/
+
+nohup.out
