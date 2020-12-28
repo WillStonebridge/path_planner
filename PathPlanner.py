@@ -104,21 +104,17 @@ class PathPlanner:
         return rough_path_lat, rough_path_lon
     
     def calc_path(self, swaypoint, gwaypoint):
-        finalpathx = []
-        finalpathy = []
         start_time = time.time()
         start_node = self.Node(self.map.transform_to_map_position(swaypoint[0], self.map.min_lat), self.map.transform_to_map_position(swaypoint[1], self.map.min_lon), 0.0, -1)
         goal_node = self.Node(self.map.transform_to_map_position(gwaypoint[0], self.map.min_lat), self.map.transform_to_map_position(gwaypoint[1], self.map.min_lon), 0.0, -1)
         x, y = self.a_star(start_node, goal_node)
         ex, ey = self.calc_critical_nodes(x,y)
         fx, fy = self.calc_smooth_line(ex, ey)
-        finalpathx += (fx) 
-        finalpathy += (fy)
         print(f"time for leg: {time.time() - start_time}")
         plt.plot(x,y, '-r')
         plt.plot(ex,ey, '.b')
         plt.plot(fx, fy, 'g-s')
-        return finalpathx, finalpathy
+        return fx, fy
     # def calc_path(self):
     #     finalpathx = []
     #     finalpathy = []
