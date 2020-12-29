@@ -2,7 +2,6 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import math
-import time 
 import numpy as np
 
 class Map:
@@ -22,10 +21,13 @@ class Map:
         min = np.amin(boundarypoints, axis = 0)
         self.min_lat = min[0]
         self.min_lon = min[1]
-        print(self.min_lat, self.min_lon)
+        for point in boundarypoints:
+            point[0], point[1] = self.decimal_to_cartesian(point[0], point[1], self.min_lat, self.min_lon)
+        for obstacle in obstacles:
+            obstacle[0], obstacle[1] = self.decimal_to_cartesian(obstacle[0], obstacle[1], self.min_lat, self.min_lon)
         self.map_y_width, self.map_x_width = 0, 0                       # widths of obstacle map
-        self.max_x, self.max_y = 0, 0                                   # max lat, max lon
-        self.min_x, self.min_y = 0, 0                                   # min lat, min lon
+        self.max_x, self.max_y = 0, 0                                  
+        self.min_x, self.min_y = 0, 0                                  
         self.resolution = resolution                                    # resolution
         self.buffer = buffer                                            # buffer
         self.calc_grid_bounds(boundarypoints)                           # finds values for max, min, and widths of lon and lat
@@ -51,6 +53,12 @@ class Map:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         d = 6371e3 * c  #  meters
         return d
+    def decimal_to_cartesian(self, lat1, lon1, lat2, lon2):
+        d = self.calc_haversine(lat2, lon2, lat1, lon1)
+        bearing = self.calc_bearing(lat2, lon2, lat1, lon1)
+        x = round(d * math.cos(bearing))
+        y = round(d * math.sin(bearing))
+        return x, y
     def transform_to_real_position(self, index, min_index):
         """
         transforms index to corresponding "real" position 
@@ -64,8 +72,7 @@ class Map:
         """ 
         index = (position - min_index) / self.resolution
         return index
-    def decimal_to_cartesian(self, coordinates):
-        ""          
+
     def calc_grid_bounds(self, boundarypoints):
         self.min_x = boundarypoints[0][0]
         self.min_y = boundarypoints[0][1]
@@ -80,7 +87,12 @@ class Map:
                 self.min_y = boundarypoint[1]
         self.map_y_width = round((self.max_y - self.min_y) / self.resolution)
         self.map_x_width = round((self.max_x - self.min_x) / self.resolution)
-
+        # print(f"self.min_x: {self.min_x}\n")
+        # print(f"self.min_y: {self.min_y}\n")
+        # print(f"self.max_x: {self.max_x}\n")
+        # print(f"self.max_y: {self.max_y}\n")
+        # print(f"self.map_x_width: {self.map_x_width}\n")
+        # print(f"self.map_y_width: {self.map_y_width}\n")
 
     def calc_obstacle_map(self, obstacles, boundarypoints, buffer):
         boundaryPath = mpath.Path(boundarypoints)
@@ -97,5 +109,42 @@ class Map:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
     
-    
+def main():
+    mission_data = "AUVSI2021waypoints.json"
+    resolution = 10
+    buffer = 5
+    file = json.load(open(mission_data, 'rb'))
+    waypoints = []
+    boundarypoints = []
+    obstacles = []
+    for waypoint in file["waypoints"]:
+            waypoints += [[waypoint["latitude"],
+                                waypoint["longitude"], waypoint["altitude"]]]
+
+    for boundarypoint in file["boundaryPoints"]:
+        boundarypoints += [[boundarypoint["latitude"],
+                            boundarypoint["longitude"]]]
+    boundarypoints.append(list(boundarypoints[0]))
+
+    for obstacle in file["obstacles"]:
+        obstacles += [[obstacle["latitude"],
+                        obstacle["longitude"], obstacle["radius"]]]
+    map = Map(resolution, boundarypoints, obstacles, buffer)
+    invalid = []
+    for x in range(len(map.obstacle_map)):
+        for y in range(len(map.obstacle_map[x])):
+            if not map.obstacle_map[x][y]:
+                invalid.append([map.transform_to_real_position(x, map.min_x), map.transform_to_real_position(y, map.min_y)])
+    fig, ax = plt.subplots()
+
+    for node in invalid:
+        plt.plot(node[0], node[1], '.k')
+    ax.set_xlim(map.min_x - 10, map.max_x + 10)
+    ax.set_ylim(map.min_y - 10, map.max_y + 10)
+    plt.grid(True)
+    plt.axis("equal")
+    plt.show()
+
+if __name__ == "__main__":
+    main()    
     

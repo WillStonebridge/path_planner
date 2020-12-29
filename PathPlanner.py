@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 from Mapping import Map
-import os
 
 class PathPlanner:
     """
@@ -24,12 +23,12 @@ class PathPlanner:
         for boundarypoint in file["boundaryPoints"]:
             boundarypoints += [[boundarypoint["latitude"],
                                 boundarypoint["longitude"]]]
-        boundarypoints.append(boundarypoints[0])
+        boundarypoints.append(list(boundarypoints[0]))
 
         for obstacle in file["obstacles"]:
             obstacles += [[obstacle["latitude"],
                             obstacle["longitude"], obstacle["radius"]]]
-        
+
         self.map = Map(resolution, boundarypoints, obstacles, buffer)
         self.motion = [[1, 0, 1],                  # [x direction, y direction, cost]
                         [0, 1, 1],
