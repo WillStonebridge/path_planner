@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import math
 import time 
+import numpy as np
 
 class Map:
     """
@@ -18,6 +19,10 @@ class Map:
         obstacles: list of points and respective radiuses 
         buffer: buffer around obstacles
         """ 
+        min = np.amin(boundarypoints, axis = 0)
+        self.min_lat = min[0]
+        self.min_lon = min[1]
+        print(self.min_lat, self.min_lon)
         self.map_y_width, self.map_x_width = 0, 0                       # widths of obstacle map
         self.max_x, self.max_y = 0, 0                                   # max lat, max lon
         self.min_x, self.min_y = 0, 0                                   # min lat, min lon
@@ -64,7 +69,6 @@ class Map:
     def calc_grid_bounds(self, boundarypoints):
         self.min_x = boundarypoints[0][0]
         self.min_y = boundarypoints[0][1]
-        self.min_y, self.min_x = 0, 0 
         for boundarypoint in boundarypoints:
             if boundarypoint[0] > self.max_x:
                 self.max_x = boundarypoint[0]
