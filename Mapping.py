@@ -18,19 +18,34 @@ class Map:
         obstacles: list of points and respective radiuses 
         buffer: buffer around obstacles
         """ 
-        self.map_lon_width, self.map_lat_width = 0, 0                   # widths of obstacle map
-        self.max_lat, self.max_lon = 0, 0                               # max lat, max lon
-        self.min_lat, self.min_lon = 0, 0                               # min lat, min lon
+        self.map_y_width, self.map_x_width = 0, 0                       # widths of obstacle map
+        self.max_x, self.max_y = 0, 0                                   # max lat, max lon
+        self.min_x, self.min_y = 0, 0                                   # min lat, min lon
         self.resolution = resolution                                    # resolution
         self.buffer = buffer                                            # buffer
         self.calc_grid_bounds(boundarypoints)                           # finds values for max, min, and widths of lon and lat
         self.obstacle_map = None                                        # map of obstacles (initialized to none)
         self.calc_obstacle_map(obstacles, boundarypoints, buffer)       # creates map of obstacles and boundaries, stores it into a 2D list in obstacle_map
 
-    def geographic_to_cart(self, point):
-        return true
-    def cart_to_geographic(self, point):
-        return True
+    def calc_bearing(self, lat1, lon1, lat2, lon2):
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+        dlat = lat2 - lat1
+        dlon = lon2- lon1
+        return math.atan2(math.sin(dlon) * math.cos(lat2), math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon))
+    def calc_haversine(self, lat1, lon1, lat2, lon2):
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+        dlat = lat2 - lat1
+        dlon = lon2- lon1
+        a = pow(math.sin(dlat / 2),2) + math.cos(lat1) * math.cos(lat2) * pow(math.sin(dlon / 2), 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        d = 6371e3 * c  #  meters
+        return d
     def transform_to_real_position(self, index, min_index):
         """
         transforms index to corresponding "real" position 
@@ -47,29 +62,29 @@ class Map:
     def decimal_to_cartesian(self, coordinates):
         ""          
     def calc_grid_bounds(self, boundarypoints):
-        self.min_lat = boundarypoints[0][0]
-        self.min_lon = boundarypoints[0][1]
-        self.min_lon, self.min_lat = 0, 0 
+        self.min_x = boundarypoints[0][0]
+        self.min_y = boundarypoints[0][1]
+        self.min_y, self.min_x = 0, 0 
         for boundarypoint in boundarypoints:
-            if boundarypoint[0] > self.max_lat:
-                self.max_lat = boundarypoint[0]
-            if boundarypoint[1] > self.max_lon:
-                self.max_lon = boundarypoint[1]
-            if boundarypoint[0] < self.min_lat:
-                self.min_lat = boundarypoint[0]
-            if boundarypoint[1] < self.min_lon:
-                self.min_lon = boundarypoint[1]
-        self.map_lon_width = round((self.max_lon - self.min_lon) / self.resolution)
-        self.map_lat_width = round((self.max_lat - self.min_lat) / self.resolution)
+            if boundarypoint[0] > self.max_x:
+                self.max_x = boundarypoint[0]
+            if boundarypoint[1] > self.max_y:
+                self.max_y = boundarypoint[1]
+            if boundarypoint[0] < self.min_x:
+                self.min_x = boundarypoint[0]
+            if boundarypoint[1] < self.min_y:
+                self.min_y = boundarypoint[1]
+        self.map_y_width = round((self.max_y - self.min_y) / self.resolution)
+        self.map_x_width = round((self.max_x - self.min_x) / self.resolution)
 
 
     def calc_obstacle_map(self, obstacles, boundarypoints, buffer):
         boundaryPath = mpath.Path(boundarypoints)
-        self.obstacle_map = [[False for _ in range(self.map_lon_width)] for _ in range(self.map_lat_width)]
-        for initial_x in range(self.map_lat_width):
-            x = self.transform_to_real_position(initial_x, self.min_lat)
-            for initial_y in range(self.map_lon_width):
-                y = self.transform_to_real_position(initial_y, self.min_lon)
+        self.obstacle_map = [[False for _ in range(self.map_y_width)] for _ in range(self.map_x_width)]
+        for initial_x in range(self.map_x_width):
+            x = self.transform_to_real_position(initial_x, self.min_x)
+            for initial_y in range(self.map_y_width):
+                y = self.transform_to_real_position(initial_y, self.min_y)
                 if not boundaryPath.contains_point([x,y]):
                     self.obstacle_map[initial_x][initial_y] = True
                 else:

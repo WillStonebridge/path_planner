@@ -54,7 +54,7 @@ class PathPlanner:
         return distance1
 
     def calc_grid_index(self, node):
-        return (node.lon - self.map.min_lon) * self.map.map_lat_width + (node.lat - self.map.min_lat)
+        return (node.lon - self.map.min_y) * self.map.map_x_width + (node.lat - self.map.min_x)
 
     def a_star(self, snode, gnode):
         start_node = snode
@@ -91,21 +91,21 @@ class PathPlanner:
                 else:
                     if open_set[new_id].cost > node.cost:
                         open_set[new_id] = node
-        rough_path_lat.append(self.map.transform_to_map_position(gnode.lat, self.map.min_lat))
-        rough_path_lon.append(self.map.transform_to_map_position(gnode.lon, self.map.min_lon))
+        rough_path_lat.append(self.map.transform_to_map_position(gnode.lat, self.map.min_x))
+        rough_path_lon.append(self.map.transform_to_map_position(gnode.lon, self.map.min_y))
         parent_index = gnode.parent_index
         while parent_index != -1:
             node = closed_set[parent_index]
-            rough_path_lat.append(self.map.transform_to_map_position(node.lat, self.map.min_lat))
-            rough_path_lon.append(self.map.transform_to_map_position(node.lon, self.map.min_lon))
+            rough_path_lat.append(self.map.transform_to_map_position(node.lat, self.map.min_x))
+            rough_path_lon.append(self.map.transform_to_map_position(node.lon, self.map.min_y))
             parent_index = node.parent_index
         return rough_path_lat, rough_path_lon
     
     def calc_path(self, swaypoint, gwaypoint):
         alt = []
-        start_node = self.Node(self.map.transform_to_map_position(swaypoint[0], self.map.min_lat), self.map.transform_to_map_position(swaypoint[1], self.map.min_lon), 0.0, -1)
-        goal_node = self.Node(self.map.transform_to_map_position(gwaypoint[0], self.map.min_lat), self.map.transform_to_map_position(gwaypoint[1], self.map.min_lon), 0.0, -1)
-        rx, ry = self.a_star(start_node, goal_node) # lat is "x", lon is "y"
+        start_node = self.Node(self.map.transform_to_map_position(swaypoint[0], self.map.min_x), self.map.transform_to_map_position(swaypoint[1], self.map.min_y), 0.0, -1)
+        goal_node = self.Node(self.map.transform_to_map_position(gwaypoint[0], self.map.min_x), self.map.transform_to_map_position(gwaypoint[1], self.map.min_y), 0.0, -1)
+        rx, ry = self.a_star(start_node, goal_node) 
         cx, cy = self.calc_critical_nodes(rx,ry)
         fx, fy = self.calc_smooth_line(cx, cy)
         fx.reverse()
@@ -123,8 +123,8 @@ class PathPlanner:
         return fx, fy       
 
     def verify_node(self, node):
-        x = round(self.map.transform_to_map_position(node.lat, self.map.min_lat))
-        y = round(self.map.transform_to_map_position(node.lon, self.map.min_lon))
+        x = round(self.map.transform_to_map_position(node.lat, self.map.min_x))
+        y = round(self.map.transform_to_map_position(node.lon, self.map.min_y))
         if self.map.obstacle_map[x][y]:
             return False
         return True
@@ -164,8 +164,8 @@ class PathPlanner:
         my = float((y2 - y1) / 100)
 
         for t in range(0,100):
-            x = int(self.map.transform_to_map_position(int(round(mx * t)) + x1, self.map.min_lat))
-            y = int(self.map.transform_to_map_position(int(round(my * t)) + y1, self.map.min_lon))
+            x = int(self.map.transform_to_map_position(int(round(mx * t)) + x1, self.map.min_x))
+            y = int(self.map.transform_to_map_position(int(round(my * t)) + y1, self.map.min_y))
 
             if self.map.obstacle_map[x][y] == True:
                 return True
@@ -200,9 +200,11 @@ def main():
     for x in range(len(plan.map.obstacle_map)):
         for y in range(len(plan.map.obstacle_map[x])):
             if plan.map.obstacle_map[x][y]:
-                invalid.append([plan.map.transform_to_real_position(x, plan.map.min_lat), plan.map.transform_to_real_position(y, plan.map.min_lon)])
+                invalid.append([plan.map.transform_to_real_position(x, plan.map.min_x), plan.map.transform_to_real_position(y, plan.map.min_y)])
     for node in invalid:
         plt.plot(node[0], node[1], '.k')
+    print(plan.map.calc_haversine(38.146269, -76.428164, 0, 0))
+    print(plan.map.calc_bearing(38.146269, -76.428164, 0, 0))
     plan.dump_path()
     plt.grid(True)
     plt.axis("equal")
