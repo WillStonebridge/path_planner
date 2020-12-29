@@ -27,7 +27,10 @@ class Map:
         self.obstacle_map = None                                        # map of obstacles (initialized to none)
         self.calc_obstacle_map(obstacles, boundarypoints, buffer)       # creates map of obstacles and boundaries, stores it into a 2D list in obstacle_map
 
-
+    def geographic_to_cart(self, point):
+        return true
+    def cart_to_geographic(self, point):
+        return True
     def transform_to_real_position(self, index, min_index):
         """
         transforms index to corresponding "real" position 
@@ -41,7 +44,8 @@ class Map:
         """ 
         index = (position - min_index) / self.resolution
         return index
-                        
+    def decimal_to_cartesian(self, coordinates):
+        ""          
     def calc_grid_bounds(self, boundarypoints):
         self.min_lat = boundarypoints[0][0]
         self.min_lon = boundarypoints[0][1]
@@ -57,7 +61,6 @@ class Map:
                 self.min_lon = boundarypoint[1]
         self.map_lon_width = round((self.max_lon - self.min_lon) / self.resolution)
         self.map_lat_width = round((self.max_lat - self.min_lat) / self.resolution)
-        # print(f"min_lat: {self.min_lat}\nmin_lon: {self.min_lon}\nmax_lat: {self.max_lat}\nmax_lon: {self.max_lon}\nmap_lat_width: {self.map_lat_width}\nmap_lon_width: {self.map_lon_width}\n")
 
 
     def calc_obstacle_map(self, obstacles, boundarypoints, buffer):
@@ -71,35 +74,9 @@ class Map:
                     self.obstacle_map[initial_x][initial_y] = True
                 else:
                     for obstacle in obstacles:
-                        # print(f"x: {x}          y: {y}         hypot: {math.hypot(obstacle[0] - x, obstacle[1] - y)}       radius: {obstacle[2]}     circle center: {obstacle[0]}, {obstacle[1]}")
                         if math.hypot(obstacle[0] - x, obstacle[1] - y) - self.buffer <= obstacle[2]:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
     
     
     
-def main():
-    start_time = time.time()
-    mission_data = "D:/Leonard/Documents/PART/testmap.json"
-    resolution = 1
-    buffer = 5
-    map = Map(resolution, mission_data, buffer)
-    print(f"time: {time.time() - start_time}")
-    invalid = []
-    for x in range(len(map.obstacle_map)):
-        for y in range(len(map.obstacle_map[x])):
-            if not map.obstacle_map[x][y]:
-                invalid.append([map.transform_to_real_position(x, map.min_lat), map.transform_to_real_position(y, map.min_lon)])
-    fig, ax = plt.subplots()
-
-    for node in invalid:
-        plt.plot(node[0], node[1], '.k')
-    ax.set_xlim(map.min_lat - 10, map.max_lat + 10)
-    ax.set_ylim(map.min_lon - 10, map.max_lon + 10)
-    plt.grid(True)
-    plt.axis("equal")
-    plt.show()
-
-if __name__ == "__main__":
-    main()
-

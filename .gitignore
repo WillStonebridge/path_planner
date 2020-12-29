@@ -6,6 +6,7 @@ __pycache__/
 
 # Ignore python execution files
 *.pyc
-venv/
 
+venv/
+routepath.json
 nohup.out
