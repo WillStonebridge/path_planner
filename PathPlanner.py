@@ -20,12 +20,12 @@ class PathPlanner:
                 self.waypoints += [[waypoint["latitude"],
                                     waypoint["longitude"], waypoint["altitude"]]]
 
-        for boundarypoint in file["boundaryPoints"]:
+        for boundarypoint in file['flyZones'][0]['boundaryPoints']:
             boundarypoints += [[boundarypoint["latitude"],
                                 boundarypoint["longitude"]]]
         boundarypoints.append(list(boundarypoints[0]))
 
-        for obstacle in file["obstacles"]:
+        for obstacle in file["stationaryObstacles"]:
             obstacles += [[obstacle["latitude"],
                             obstacle["longitude"], obstacle["radius"]]]
 
@@ -136,10 +136,12 @@ class PathPlanner:
                 
         for i, (x,y) in enumerate(zip(fx, fy)):    
             fx[i], fy[i] = self.map.cartesian_to_decimal(x, y, self.map.min_lat, self.map.min_lon)
-
+        if len(self.path['waypoints']) > 0:
+            fx.pop(0)
+            fy.pop(0)
+            alt.pop(0)
         for i in range(len(fx)):
             self.path['waypoints'].append({'latitude': fx[i], 'longitude': fy[i], 'altitude': alt[i]})
-
         return fx, fy       
 
     def verify_node(self, node):
@@ -221,7 +223,7 @@ class PathPlanner:
             json.dump(self.path, file)
 
 def main():
-    mission_data = 'AUVSI2021waypoints.json'
+    mission_data = 'interop_example.json'
     resolution = 10
     buffer = 10
     plan = PathPlanner(resolution, mission_data, buffer)
@@ -239,6 +241,7 @@ def main():
 
 
     plan.calc_path(plan.waypoints[0], plan.waypoints[1])
+    plan.calc_path(plan.waypoints[1], plan.waypoints[2])
     plan.dump_path()
     plt.show()
 

@@ -112,14 +112,14 @@ class Map:
                     self.obstacle_map[initial_x][initial_y] = True
                 else:
                     for obstacle in obstacles:
-                        if math.hypot(obstacle[0] - x, obstacle[1] - y) - self.buffer <= obstacle[2]:
+                        if math.hypot(obstacle[0] - x, obstacle[1] - y) - self.buffer <= obstacle[2] * 0.3048:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
     
 def main():
-    mission_data = "AUVSI2021waypoints.json"
+    mission_data = "interop_example.json"
     resolution = 10
-    buffer = 5
+    buffer = 0
     file = json.load(open(mission_data, 'rb'))
     waypoints = []
     boundarypoints = []
@@ -128,12 +128,12 @@ def main():
             waypoints += [[waypoint["latitude"],
                                 waypoint["longitude"], waypoint["altitude"]]]
 
-    for boundarypoint in file["boundaryPoints"]:
+    for boundarypoint in file['flyZones'][0]['boundaryPoints']:
         boundarypoints += [[boundarypoint["latitude"],
                             boundarypoint["longitude"]]]
     boundarypoints.append(list(boundarypoints[0]))
 
-    for obstacle in file["obstacles"]:
+    for obstacle in file["stationaryObstacles"]:
         obstacles += [[obstacle["latitude"],
                         obstacle["longitude"], obstacle["radius"]]]
     map = Map(resolution, boundarypoints, obstacles, buffer)
