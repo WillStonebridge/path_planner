@@ -155,7 +155,7 @@ class PathPlanner:
             return False
         elif py >= self.map.cart_max_y:
             return False
-        if self.map.obstacle_map[round(node.x) - 1][round(node.y) - 1]:
+        if self.map.obstacle_map[round(node.x)][round(node.y)]:
             return False
         return True
     
