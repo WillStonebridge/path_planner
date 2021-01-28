@@ -145,8 +145,8 @@ class PathPlanner:
         return fx, fy       
 
     def verify_node(self, node):
-        px = round(self.map.transform_to_cart_position(node.x))
-        py = round(self.map.transform_to_cart_position(node.y))
+        px = self.map.transform_to_cart_position(node.x)
+        py = self.map.transform_to_cart_position(node.y)
         if px <= 0: 
             return False
         elif py <= 0:
@@ -155,7 +155,7 @@ class PathPlanner:
             return False
         elif py >= self.map.cart_max_y:
             return False
-        if self.map.obstacle_map[round(node.x)][round(node.y)]:
+        if self.map.obstacle_map[node.x][node.y]:
             return False
         return True
     
@@ -239,9 +239,11 @@ def main():
     # plt.grid(True)
     # plt.axis("equal")
 
-
-    plan.calc_path(plan.waypoints[0], plan.waypoints[1])
-    plan.calc_path(plan.waypoints[1], plan.waypoints[2])
+    for i, waypoint in enumerate(plan.waypoints):
+        try:
+            plan.calc_path(plan.waypoints[i], plan.waypoints[i+1])
+        except IndexError:
+            pass
     plan.dump_path()
     plt.show()
 
