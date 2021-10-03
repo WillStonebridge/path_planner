@@ -28,7 +28,7 @@ Reference http://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.
 # Running mission_mode node
 1. Update ROS Environment for Gazebo ROS wrappers 
   ```bash
-  source ~/catkin_ws/src/path_planner/launch/launch-common.sh
+  source ~/catkin_ws/src/path_planner/launch-common.sh
   ```
 2. Run QGC or Mavproxy
   - QGC: Run QGC, through some magic it should connect
