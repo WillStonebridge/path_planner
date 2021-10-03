@@ -5,8 +5,7 @@
 * @version 0.0.1
 * @date 2017-09-01
 */
-
-#include <ros/ros.h>
+#include <ros/ros.h> 
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
@@ -24,7 +23,6 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 	bool armed = current_state.armed;
 	ROS_INFO("%s", armed ? "" : "DisArmed");
 }
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "auto_set_mode");
@@ -102,10 +100,10 @@ int main(int argc, char **argv)
     wp.z_alt          = 0;
     wp_push_srv.request.waypoints.push_back(wp);
 
-    ros::Rate rate(20.0);
+    ros::Rate rate(20);
 
     // wait for FCU connection
-    while(ros::ok() && current_state.connected){
+    while(ros::ok() && !current_state.connected){
         ros::spinOnce();
         rate.sleep();
     }
@@ -124,17 +122,9 @@ int main(int argc, char **argv)
 
     else
         ROS_ERROR("Send waypoints FAILED.");
-
-    ros::Time last_request = ros::Time::now();
-
-    if (current_state.mode != "AUTO.MISSION"&&
-        (ros::Time::now() - last_request > ros::Duration(5.0))) {
-        if( set_mode_client.call(auto_set_mode) &&
-            auto_set_mode.response.mode_sent){
-            ROS_INFO("AUTO.MISSION enabled");
-        }
     
-    last_request = ros::Time::now();
+    
+    ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
         if( !current_state.armed &&
@@ -142,6 +132,14 @@ int main(int argc, char **argv)
             if( arming_client.call(arm_cmd) &&
                 arm_cmd.response.success){
                 ROS_INFO("Vehicle armed");
+            }
+            last_request = ros::Time::now();
+        }
+        else if ((current_state.mode != "AUTO.MISSION" && current_state.mode != "AUTO.RTL") &&
+                (ros::Time::now() - last_request > ros::Duration(5.0))) {
+            if( set_mode_client.call(auto_set_mode) &&
+                auto_set_mode.response.mode_sent){
+                ROS_INFO("AUTO.MISSION enabled");
             }
             last_request = ros::Time::now();
         }
