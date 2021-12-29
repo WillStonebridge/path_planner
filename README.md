@@ -43,7 +43,11 @@ Reference http://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.
     ```bash
     mavproxy.py --master localhost:14550
     ```
-3. Launch mission_mode.launch
+3. Launch mission_mode.launch (currently only launches px4_sitl)
   ```bash
   roslaunch mission_mode mission_mode.launch
   ```
+4. Run mission_mode_node
+```bash
+rosrun mission_mode mission_mode_node 
+```
