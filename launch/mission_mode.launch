@@ -1,5 +1,10 @@
+<?xml version="1.0"?>
 <launch>
-    <include file="$(find px4)/launch/mavros_posix_sitl.launch"/>
-
-    <node name="mission_mode" pkg="mission_mode" type="mission_mode_node" output="screen"/>
+    <arg name="world" value= "$(find mission_mode)/worlds/empty.world"/>
+    <arg name="vehicle" value= "plane"/>
+    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
+        <arg name="world" value="$(arg world)"/>
+        <arg name="vehicle" value= "$(arg vehicle)"/>
+    </include>
+    <!--node name="mission_mode" pkg="mission_mode" type="mission_mode_node" output="screen"/-->
 </launch>

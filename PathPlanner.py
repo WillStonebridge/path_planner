@@ -10,7 +10,7 @@ class PathPlanner:
     mission_data: string path of json file of mission data
     buffer: float length of safety "buffer" around obstacles
 
-    """
+    """ 
     def __init__(self, resolution, mission_data, buffer):
         file = json.load(open(mission_data, 'rb'))
         self.waypoints = []
@@ -129,7 +129,7 @@ class PathPlanner:
         # plt.plot(fx, fy, 'g-s')
 
         pitch = self.calc_pitch(swaypoint[2], gwaypoint[2], fx, fy)
-        alt.append(swaypoint[2])
+        alt.append(swaypoint[2] * 0.3048)
         for i, (x,y) in enumerate(zip(fx, fy)):
             if i > 0:
                 alt.append(self.calc_altitude(pitch, fx[i - 1], fy[i-1], x, y, alt[i - 1]))
@@ -160,7 +160,7 @@ class PathPlanner:
         return True
     
     def calc_pitch(self, startalt, goalalt, fx, fy):
-        dalt = goalalt - startalt
+        dalt = (goalalt - startalt) 
         x = np.diff(fx)
         y = np.diff(fy)
         distance = 0
@@ -171,7 +171,7 @@ class PathPlanner:
     def calc_altitude(self, pitch, sx, sy, gx, gy, startalt):
         dx = gx - sx
         dy = gy -sy
-        return round(math.hypot(dx,dy) * math.tan(pitch),2) + startalt
+        return round(math.hypot(dx,dy) * math.tan(pitch),2) *0.3048 + startalt
 
     def calc_critical_nodes(self, xlist, ylist):
         criticalx = []
