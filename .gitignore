@@ -6,7 +6,8 @@ __pycache__/
 
 # Ignore python execution files
 *.pyc
-*.swp
+
+*.sw
 
 venv/
 routepath.json
