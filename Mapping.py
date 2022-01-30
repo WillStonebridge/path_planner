@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import math
 import numpy as np
+import getopt, sys
  
 class Map:
     """
@@ -116,10 +117,26 @@ class Map:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
     
-def main():
+def main(argumentList):
     mission_data = "interop_example.json"
     resolution = 10
     buffer = 0
+
+    options = "r:b:i:"
+    long_options = ["file"]
+    try:
+        # Parsing argument
+        arguments, values = getopt.getopt(argumentList, options, long_options) 
+    except getopt.GetoptError:
+        print('Options:\n -i <inputfile> \n -r <resolution meters> -b <buffer meters>')
+        sys.exit(2)
+    for opt, arg in arguments:
+        if opt == '-i':
+            mission_data = arg
+        elif opt == '-r':
+            resolution = int(arg)
+        elif opt == '-b':
+            buffer = int(arg)
     file = json.load(open(mission_data, 'rb'))
     waypoints = []
     boundarypoints = []
@@ -151,5 +168,5 @@ def main():
     plt.show()
 
 if __name__ == "__main__":
-    main()    
+    main(sys.argv[1:])    
     
