@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise
 
-show_animation = True
+show_animation = False
 
 
 class RRTDubins(RRT):
@@ -64,7 +64,7 @@ class RRTDubins(RRT):
         self.max_iter = max_iter
         self.obstacle_list = obstacle_list
 
-        self.curvature = 1 # for dubins path
+        self.curvature = 0.01 # for dubins path
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
 
@@ -227,8 +227,6 @@ def main():
         
     boundarypoints.append(list(boundarypoints[0]))
     
-    print(boundarypoints)
-
     boundarypoints_same = boundarypoints
 
     for obstacle in file["stationaryObstacles"]:
@@ -294,22 +292,20 @@ def main():
     # print(obstacleList)
   
 
-    print((x_list_way,y_list_way))
-
+    paths = []
     for i in range(len(x_list_way)-1):
 
     # Set Initial parameters
         start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
         goal = [x_list_way[i+1], y_list_way[i+1], np.deg2rad(0.0)]
 
-        print(start)
 
         rrt_dubins = RRTDubins(start, goal, obstacleList, [0, 2000])
         path = rrt_dubins.planning(animation=show_animation)
 
-       
+        
 
-        # print(path)
+        paths.append(path)
 
         # Draw final path
         if show_animation:  # pragma: no cover
