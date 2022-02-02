@@ -116,7 +116,7 @@ class RRTDubins(RRT):
                 plt.plot(node.path_x, node.path_y, "-g")
 
         for (ox, oy, size) in self.obstacle_list:
-            plt.plot(ox, oy, "ok", ms=30 * size)
+            plt.plot(ox, oy, "ok", ms= size)
 
         plt.plot(self.start.x, self.start.y, "xr")
         plt.plot(self.end.x, self.end.y, "xr")
@@ -289,7 +289,7 @@ def main():
 
     for i in range(len(x_list_obs)):
          #try making this circles
-        obstacleList.append((x_list_obs[i],y_list_obs[i],1))
+        obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10))
 
     # print(obstacleList)
   
