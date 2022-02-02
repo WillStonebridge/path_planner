@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise
 
-show_animation = False
+show_animation = True
 
 
 class RRTDubins(RRT):
@@ -99,10 +99,10 @@ class RRTDubins(RRT):
         last_index = self.search_best_goal_node()
         if last_index:
             return self.generate_final_course(last_index)
-        else:
-            print("Cannot find path")
+        # else:
+        #     print("Cannot find path")
 
-        return None
+        # return None
 
     def draw_graph(self, rnd=None):  # pragma: no cover
         plt.clf()
@@ -209,7 +209,10 @@ class RRTDubins(RRT):
 
 
 def main():
-    print(sys.path)
+
+    altitude = 200
+
+
     mission_data = "interop_example.json"
     file = json.load(open(mission_data, 'rb'))
     
@@ -293,7 +296,12 @@ def main():
   
 
     paths = []
+    
+    final_paths = {}
+    blank = '['
     for i in range(len(x_list_way)-1):
+
+        new_path = []
 
     # Set Initial parameters
         start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
@@ -303,12 +311,36 @@ def main():
         rrt_dubins = RRTDubins(start, goal, obstacleList, [0, 2000])
         path = rrt_dubins.planning(animation=show_animation)
 
+       
+        # print(path)
+        for point in path:
+            
+            lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
+            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(altitude)}
+            blank += json.JSONEncoder().encode(new_point)
+            blank += ','
+
+    blank = blank[:-1]
+    blank += ']'
+    with open('RRT_out.json', 'w') as file:
+        file.write(blank)   
+        
+        
+            
+            
+            
+        
+        print(new_path)
+
+  
+
         
 
-        paths.append(path)
+
+        
 
         # Draw final path
-        if show_animation:  # pragma: no cover
+    if show_animation:  # pragma: no cover
             rrt_dubins.draw_graph()
     
 
@@ -316,7 +348,8 @@ def main():
             plt.grid(True)
             plt.pause(0.001)
             plt.show()
-
+    
+    
 
 if __name__ == '__main__':
     main()
