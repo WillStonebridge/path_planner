@@ -50,7 +50,7 @@ class RRT:
                  goal,
                  obstacle_list,
                  rand_area,
-                 expand_dis=300.0,
+                 expand_dis=200.0,
                  path_resolution=10,
                  goal_sample_rate=0,
                  max_iter=500,
@@ -234,9 +234,11 @@ class RRT:
         if node is None:
             return False
 
+
         for (ox, oy, size) in obstacleList:
             dx_list = [ox - x for x in node.path_x]
             dy_list = [oy - y for y in node.path_y]
+            
             d_list = [dx * dx + dy * dy for (dx, dy) in zip(dx_list, dy_list)]
 
             if min(d_list) <= size**2:

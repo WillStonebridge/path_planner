@@ -103,6 +103,7 @@ class Map:
         self.map_x_width = round(self.cart_max_x / self.resolution)
 
     def calc_obstacle_map(self, obstacles, boundarypoints, buffer):
+
         boundaryPath = mpath.Path(boundarypoints)
         self.obstacle_map = [[False for _ in range(self.map_y_width)] for _ in range(self.map_x_width)]
         for initial_x in range(self.map_x_width):
@@ -116,6 +117,7 @@ class Map:
                         if math.hypot(obstacle[0] - x, obstacle[1] - y) - self.buffer <= obstacle[2] * 0.3048:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
+        return self.obstacle_map
     
 def main():
     mission_data = "interop_example.json"
@@ -145,8 +147,6 @@ def main():
             if map.obstacle_map[x][y]:
                 valid.append([x, y])
     fig, ax = plt.subplots()
-
-    print(valid)
 
     for node in valid:
         plt.plot(node[0], node[1], '.k')
