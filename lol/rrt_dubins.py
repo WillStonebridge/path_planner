@@ -1,5 +1,6 @@
 import copy
 import math
+from operator import index
 import os
 from pickle import TRUE
 import random
@@ -7,6 +8,7 @@ import sys
 import json
 import time
 from tkinter.tix import Tree
+from xxlimited import new
 
 
 import matplotlib.pyplot as plt
@@ -27,7 +29,7 @@ try:
 except ImportError:
     raise
 
-show_animation = False
+show_animation = True
 
 
 class RRTDubins(RRT):
@@ -48,7 +50,7 @@ class RRTDubins(RRT):
 
     def __init__(self, start, goal, obstacle_list, rand_area, obstacle_map,map,
                  goal_sample_rate=10,
-                 max_iter=2000,
+                 max_iter=1000,
                  ):
         """
         Setting Parameter
@@ -69,7 +71,7 @@ class RRTDubins(RRT):
         self.obstacle_map = obstacle_map
         self.map = map
 
-        self.curvature = 0.01 # for dubins path
+        self.curvature = 1/100 # for dubins path
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
 
@@ -97,12 +99,12 @@ class RRTDubins(RRT):
                 index_x = self.map.transform_to_map_index(new_node.x)
                 index_y = self.map.transform_to_map_index(new_node.y)
 
-                if self.check_collision(new_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]):
+                if self.check_collision(new_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]) and self.check_path(new_node):
                     self.node_list.append(new_node)
 
-            if animation and i % 5 == 0:
-                self.plot_start_goal_arrow()
-                self.draw_graph(rnd)
+            # if animation and i % 5 == 0:
+            #     self.plot_start_goal_arrow()
+            #     self.draw_graph(rnd)
 
         if new_node:  
                 # print('hi')# check reaching the goal
@@ -121,15 +123,15 @@ class RRTDubins(RRT):
         # return None
 
     def draw_graph(self, rnd=None):  # pragma: no cover
-        plt.clf()
-        # for stopping simulation with the esc key.
-        plt.gcf().canvas.mpl_connect('key_release_event',
-                lambda event: [exit(0) if event.key == 'escape' else None])
+        # plt.clf()
+        # # for stopping simulation with the esc key.
+        # plt.gcf().canvas.mpl_connect('key_release_event',
+        #         lambda event: [exit(0) if event.key == 'escape' else None])
         if rnd is not None:
             plt.plot(rnd.x, rnd.y, "^k")
-        for node in self.node_list:
-            if node.parent:
-                plt.plot(node.path_x, node.path_y, "-g")
+        # for node in self.node_list:
+        #     if node.parent:
+        #         plt.plot(node.path_x, node.path_y, "-g")
 
         for (ox, oy, size) in self.obstacle_list:
             plt.plot(ox, oy, "ok", ms= size)
@@ -146,6 +148,24 @@ class RRTDubins(RRT):
             self.start.x, self.start.y, self.start.yaw)
         dubins_path_planning.plot_arrow(
             self.end.x, self.end.y, self.end.yaw)
+    
+    def check_path(self, new_node):
+       for i in range(len(new_node.path_x)):
+            # try:
+            index_x = self.map.transform_to_map_index(new_node.path_x[i])
+            index_y = self.map.transform_to_map_index(new_node.path_y[i])
+
+            return(self.check_boundary([round(index_x),round(index_y)]))
+
+
+            #     if self.obstacle_map[round(index_x)][round(index_y)]:
+            #         return False
+            # except:
+            #     return False
+            
+            # return True
+        
+        
 
     def steer(self, from_node, to_node):
         px, py, pyaw, mode, course_lengths = \
@@ -338,8 +358,17 @@ def main():
         new_path = []
 
     # Set Initial parameters
-        start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
-        goal = [x_list_way[i+1], y_list_way[i+1], np.arctan((y_list_way[i+1]-y_list_way[i])/(x_list_way[i+1]-x_list_way[i]))]
+        if i == 0:
+            start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(x_list_way[i+1]-x_list_way[i],y_list_way[i+1]-y_list_way[i])]
+
+
+        else:
+            start = [x_list_way[i], y_list_way[i], np.arctan2(x_list_way[i]-x_list_way[i-1],y_list_way[i]-y_list_way[i-1])]
+
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(x_list_way[i+1]-x_list_way[i],y_list_way[i+1]-y_list_way[i])]
+
+        
 
 
         rrt_dubins = RRTDubins(start, goal, obstacleList, [0, 2000],obstacle_map,map)
@@ -362,6 +391,20 @@ def main():
             blank += json.JSONEncoder().encode(new_point)
             blank += ','
         
+        if show_animation:  # pragma: no cover
+            rrt_dubins.draw_graph()
+
+             
+
+            # for node in valid:
+            #     plt.plot(node[0], node[1], '.k')
+    
+
+            plt.plot([x for x in x_list_bound], [y for y in y_list_bound], '-b')
+            plt.plot([x for (x, y,_) in path], [y for (x, y,_) in path], '-r')
+            plt.grid(True)
+            plt.pause(0.001)
+    plt.show()    
         # if show_animation:  # pragma: no cover
         #         rrt_dubins.draw_graph()
 
@@ -400,20 +443,7 @@ def main():
         
 
         # Draw final path
-    if show_animation:  # pragma: no cover
-            rrt_dubins.draw_graph()
-
-             
-
-            # for node in valid:
-            #     plt.plot(node[0], node[1], '.k')
     
-
-            plt.plot([x for x in x_list_bound], [y for y in y_list_bound], '-b')
-            plt.plot([x for (x, y,_) in path], [y for (x, y,_) in path], '-r')
-            plt.grid(True)
-            plt.pause(0.001)
-            plt.show()
 
  
 
