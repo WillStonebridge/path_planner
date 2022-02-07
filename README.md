@@ -51,3 +51,10 @@ Reference http://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.
 ```bash
 rosrun mission_mode mission_mode_node 
 ```
+
+# General Notes:
+interop json altitude should be in feet
+
+resolution should be in meters
+
+buffer should be in meters

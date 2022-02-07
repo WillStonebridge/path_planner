@@ -2,6 +2,8 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import sys, getopt
+
 from Mapping import Map
 
 class PathPlanner:
@@ -70,12 +72,12 @@ class PathPlanner:
             current = open_set[current_id]
             
     # uncomment to plot a star algorithm
-            # plt.plot(current.lat, current.lon, "xc")
-            # plt.gcf().canvas.mpl_connect('key_release_event',
-            #                                 lambda event: [exit(
-            #                                     0) if event.key == 'escape' else None])
-            # if len(closed_set.keys()) % 10 == 0:
-            #     plt.pause(0.001)
+           # plt.plot(current.lat, current.lon, "xc")
+           # plt.gcf().canvas.mpl_connect('key_release_event',
+           #                                 lambda event: [exit(
+           #                                     0) if event.key == 'escape' else None])
+           # if len(closed_set.keys()) % 10 == 0:
+           #     plt.pause(0.001)
             
             if current.x == gnode.x  and current.y == gnode.y:
                 gnode.parent_index = current.parent_index
@@ -124,9 +126,9 @@ class PathPlanner:
         fy.reverse()
 
     # uncomment to plot paths
-        # plt.plot(rx,ry, '-r')
-        # plt.plot(cx,cy, '.b')
-        # plt.plot(fx, fy, 'g-s')
+       # plt.plot(rx,ry, '-r')
+       # plt.plot(cx,cy, '.b')
+       # plt.plot(fx, fy, 'g-s')
 
         pitch = self.calc_pitch(swaypoint[2], gwaypoint[2], fx, fy)
         alt.append(swaypoint[2] * 0.3048)
@@ -222,22 +224,39 @@ class PathPlanner:
         with open("routepath.json", "w") as file:
             json.dump(self.path, file)
 
-def main():
-    mission_data = 'interop_example.json'
+def main(argv):
+    mission_data = "interop_example.json"
     resolution = 10
     buffer = 10
+    
+    options = "r:b:i:"
+    long_options = ["file"]
+    try:
+        # Parsing argument
+        arguments, values = getopt.getopt(argv, options, long_options) 
+    except getopt.GetoptError:
+        print('Options:\n -i <inputfile> \n -r <resolution meters> -b <buffer meters>')
+        sys.exit(2)
+    for opt, arg in arguments:
+        if opt == '-i':
+            mission_data = arg
+        elif opt == '-r':
+            resolution = float(arg)
+        elif opt == '-b':
+            buffer = int(arg)
+
     plan = PathPlanner(resolution, mission_data, buffer)
 
 # uncomment to plot cartesian map
-    # invalid = []
-    # for x in range(len(plan.map.obstacle_map)):
-    #     for y in range(len(plan.map.obstacle_map[x])):
-    #         if plan.map.obstacle_map[x][y]:
-    #             invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
-    # for node in invalid:
-    #     plt.plot(node[0], node[1], '.k')
-    # plt.grid(True)
-    # plt.axis("equal")
+   # invalid = []
+   # for x in range(len(plan.map.obstacle_map)):
+   #     for y in range(len(plan.map.obstacle_map[x])):
+   #         if plan.map.obstacle_map[x][y]:
+   #             invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
+   # for node in invalid:
+   #     plt.plot(node[0], node[1], '.k')
+   # plt.grid(True)
+   # plt.axis("equal")
 
     for i, waypoint in enumerate(plan.waypoints):
         try:
@@ -249,7 +268,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
 
             
 
