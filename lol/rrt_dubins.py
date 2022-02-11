@@ -1,4 +1,5 @@
 import copy
+from importlib.resources import path
 import math
 from operator import index
 import os
@@ -10,6 +11,9 @@ import time
 from tkinter.tix import Tree
 from xxlimited import new
 
+# point = Point(0.5, 0.5)
+# polygon = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
+# print(polygon.contains(point))
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +75,7 @@ class RRTDubins(RRT):
         self.obstacle_map = obstacle_map
         self.map = map
 
-        self.curvature = 1/100 # for dubins path
+        self.curvature = 1/25 # for dubins path
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
 
@@ -92,15 +96,16 @@ class RRTDubins(RRT):
             # print("Iter:", i, ", number of nodes:", len(self.node_list))
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
-            new_node = self.steer(self.node_list[nearest_ind], rnd)
+            temp_node = self.steer(self.node_list[nearest_ind], rnd)
             # print('hello')
     
-            if new_node:
-                index_x = self.map.transform_to_map_index(new_node.x)
-                index_y = self.map.transform_to_map_index(new_node.y)
+            if temp_node:
+                index_x = self.map.transform_to_map_index(temp_node.x)
+                index_y = self.map.transform_to_map_index(temp_node.y)
 
-                if self.check_collision(new_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]) and self.check_path(new_node):
-                    self.node_list.append(new_node)
+                if self.check_path(temp_node) and self.check_collision(temp_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]):
+                    self.node_list.append(temp_node)
+                    new_node = temp_node
 
             # if animation and i % 5 == 0:
             #     self.plot_start_goal_arrow()
@@ -114,9 +119,9 @@ class RRTDubins(RRT):
 
        # print("reached max iteration")
 
-        last_index = self.search_best_goal_node()
-        if last_index:
-            return self.generate_final_course(last_index)
+        # last_index = self.search_best_goal_node()
+        # if last_index:
+        #     return self.generate_final_course(last_index)
         # else:
         #     print("Cannot find path")
 
@@ -150,12 +155,20 @@ class RRTDubins(RRT):
             self.end.x, self.end.y, self.end.yaw)
     
     def check_path(self, new_node):
+       if new_node == None:
+            return False
+       print(len(new_node.path_x))
        for i in range(len(new_node.path_x)):
             # try:
+            # print(new_node.path_x[i],new_node.path_y[i])
             index_x = self.map.transform_to_map_index(new_node.path_x[i])
             index_y = self.map.transform_to_map_index(new_node.path_y[i])
-
-            return(self.check_boundary([round(index_x),round(index_y)]))
+            print(new_node.path_x[i],new_node.path_y[i])
+            x = (self.check_boundary([round(index_x),round(index_y)]))
+            if x == False:
+                return False
+       return True
+        
 
 
             #     if self.obstacle_map[round(index_x)][round(index_y)]:
@@ -400,7 +413,7 @@ def main():
             #     plt.plot(node[0], node[1], '.k')
     
 
-            plt.plot([x for x in x_list_bound], [y for y in y_list_bound], '-b')
+            plt.plot([x for x in x_list_bound], [y for y in y_list_bound], 'b')
             plt.plot([x for (x, y,_) in path], [y for (x, y,_) in path], '-r')
             plt.grid(True)
             plt.pause(0.001)
