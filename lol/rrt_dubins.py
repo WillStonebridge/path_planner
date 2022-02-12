@@ -28,7 +28,7 @@ try:
 except ImportError:
     raise
 
-show_animation = False
+show_animation = True
 
 
 class RRTDubins(RRT):
@@ -70,7 +70,7 @@ class RRTDubins(RRT):
         self.obstacle_map = obstacle_map
         self.map = map
 
-        self.curvature = 1/25 # for dubins path
+        self.curvature = 1/30 # for dubins path
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
 
@@ -97,7 +97,7 @@ class RRTDubins(RRT):
                     new_node = temp_node
         if new_node:  
             last_index = self.search_best_goal_node()
-            if last_index:
+            if last_index: 
                 return self.generate_final_course(last_index)
 
     def draw_graph(self, rnd=None):  # pragma: no cover
@@ -132,6 +132,7 @@ class RRTDubins(RRT):
             index_x = self.map.transform_to_map_index(new_node.path_x[i])
             index_y = self.map.transform_to_map_index(new_node.path_y[i])
             x = (self.check_boundary([round(index_x),round(index_y)]))
+
             if x == False:
                 return False
        return True
@@ -292,11 +293,12 @@ def main():
     # Set Initial parameters
         if i == 0:
             start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
-            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(x_list_way[i+1]-x_list_way[i],y_list_way[i+1]-y_list_way[i])]
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
         else:
-            start = [x_list_way[i], y_list_way[i], np.arctan2(x_list_way[i]-x_list_way[i-1],y_list_way[i]-y_list_way[i-1])]
-            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(x_list_way[i+1]-x_list_way[i],y_list_way[i+1]-y_list_way[i])]
+            start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
 
+        print(goal[2]*180/3.14)
         rrt_dubins = RRTDubins(start, goal, obstacleList, [0, 2000],obstacle_map,map)
         path = rrt_dubins.planning(animation=show_animation)
 

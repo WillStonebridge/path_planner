@@ -1,15 +1,3 @@
-"""
-
-
-    
-
-Path planning Sample Code with Randomized Rapidly-Exploring Random Trees (RRT)
-
-author: AtsushiSakai(@Atsushi_twi)
-
-"""
-# TODO Read from interopjson (Using Mapping.py), write to routepathjson using lat lon from x,y (find in mapping.py)
-
 import math
 import random
 
@@ -50,7 +38,7 @@ class RRT:
                  goal,
                  obstacle_list,
                  rand_area,
-                 expand_dis=50.0,
+                 expand_dis=100.0,
                  path_resolution=10,
                  goal_sample_rate=0,
                  max_iter=500,
