@@ -70,7 +70,10 @@ class RRTDubins(RRT):
         self.obstacle_map = obstacle_map
         self.map = map
 
-        self.curvature = 1/30 # for dubins path
+        self.max_curvature = 1/50 # for dubins path
+        self.curvature = 0
+        self.min_curcature = 1/20
+        #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
 
@@ -82,9 +85,13 @@ class RRTDubins(RRT):
         """
         last_index = False
         self.node_list = [self.start]
+        self.curvature = self.max_curvature
         
         
         for i in range(self.max_iter):
+
+            if i != 0 and i % 100 == 0:
+                self.curvature = max(self.curvature-5,self.min_curcature)
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
@@ -95,6 +102,7 @@ class RRTDubins(RRT):
                 if self.check_path(temp_node) and self.check_collision(temp_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
                     new_node = temp_node
+            
         if new_node:  
             last_index = self.search_best_goal_node()
             if last_index: 
@@ -228,7 +236,7 @@ class RRTDubins(RRT):
 def main():
 
     altitude = 200
-    mission_data = "interop_example.json"
+    mission_data = "cloud_jockeys.json"
     file = json.load(open(mission_data, 'rb'))
     waypoints = []
     boundarypoints = []
