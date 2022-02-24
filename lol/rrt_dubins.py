@@ -104,7 +104,7 @@ class RRTDubins(RRT):
                 index_x = self.map.transform_to_map_index(temp_node.x)
                 index_y = self.map.transform_to_map_index(temp_node.y)
 
-                if self.check_path(temp_node) and self.check_collision(temp_node, self.obstacle_list) and self.check_boundary([round(index_x),round(index_y)]):
+                if self.check_path(temp_node) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
                     new_node = temp_node
             # if animation and i % 5 == 0:
@@ -304,7 +304,7 @@ def main():
         obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10))
     obstacle_map = map.calc_obstacle_map(obstacles,boundarypoints,0)
 
-
+    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50
     start_time = time.time()
     blank = '['
     for i in range(len(x_list_way)-1):
@@ -318,8 +318,7 @@ def main():
             start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
             goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
 
-        x =round(max(max(x_list_bound),max(y_list_bound)))
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, round(max(max(x_list_bound),max(y_list_bound)))],obstacle_map,map)
+        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],obstacle_map,map)
         #make area the max of the max y/x
         path = rrt_dubins.planning(animation=show_animation)
 
