@@ -72,12 +72,12 @@ class RRTDubins(RRT):
         self.max_radius = 100
         self.min_radius = 20
         self.radius = 0
-
+        self.radii = []
         self.curvature = 0
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
-        self.max_iter = round((self.max_radius - self.min_radius)/10 * 100)
+        self.max_iter = round((self.max_radius - self.min_radius)/10 * 100) + 50
 
     def planning(self, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
         """
@@ -89,14 +89,13 @@ class RRTDubins(RRT):
         self.node_list = [self.start]
         self.radius = self.max_radius
         self.curvature = 1/self.radius
-        
-        
+        new_node = None
+        print("max iterations is " + str(self.max_iter))
         for i in range(self.max_iter):
-            print(self.radius)
             if i != 0 and i % 50 == 0:
                 self.radius = max(self.radius-5,self.min_radius)
                 self.curvature = 1/self.radius
-            
+            print(self.radius)
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
@@ -106,15 +105,18 @@ class RRTDubins(RRT):
 
                 if self.check_path(temp_node) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
+                    self.radii.append(self.radius)
                     new_node = temp_node
             # if animation and i % 5 == 0:
 
             #     self.draw_graph(rnd)
-
             
         if new_node:  
             last_index = self.search_best_goal_node()
+            
             if last_index: 
+                
+
                 return self.generate_final_course(last_index)
 
     def draw_graph(self, rnd=None):  # pragma: no cover
