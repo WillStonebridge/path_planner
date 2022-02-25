@@ -81,82 +81,8 @@
             "longitude": -76.4280916666667
         }
     ],
-    "waypoints": [{
-            "latitude": 38.1446916666667,
-            "altitude": 200.0,
-            "longitude": -76.4279944444445
-        },
-        {
-            "latitude": 38.1461944444444,
-            "altitude": 300.0,
-            "longitude": -76.4237138888889
-        },
-        {
-            "latitude": 38.1438972222222,
-            "altitude": 400.0,
-            "longitude": -76.42255
-        },
-{
-        "latitude": 38.1438982222222,
-        "altitude": 400.0,
-        "longitude": -76.42285
-    },
-        {
-            "latitude": 38.1417722222222,
-            "altitude": 400.0,
-            "longitude": -76.4251083333333
-        },
-        {
-            "latitude": 38.14535,
-            "altitude": 300.0,
-            "longitude": -76.428675
-        },
-        {
-            "latitude": 38.1508972222222,
-            "altitude": 300.0,
-            "longitude": -76.4292972222222
-        },
-        {
-            "latitude": 38.1514944444444,
-            "altitude": 300.0,
-            "longitude": -76.4313833333333
-        },
-        {
-            "latitude": 38.1505333333333,
-            "altitude": 300.0,
-            "longitude": -76.434175
-        },
-        {
-            "latitude": 38.1479472222222,
-            "altitude": 200.0,
-            "longitude": -76.4316055555556
-        },
-        {
-            "latitude": 38.1443333333333,
-            "altitude": 200.0,
-            "longitude": -76.4322888888889
-        },
-        {
-            "latitude": 38.1433166666667,
-            "altitude": 300.0,
-            "longitude": -76.4337111111111
-        },
-        {
-            "latitude": 38.1410944444444,
-            "altitude": 400.0,
-            "longitude": -76.4321555555556
-        },
-        {
-            "latitude": 38.1415777777778,
-            "altitude": 400.0,
-            "longitude": -76.4252472222222
-        },
-        {
-            "latitude": 38.1446083333333,
-            "altitude": 200.0,
-            "longitude": -76.4282527777778
-        }
-    ],
+    "waypoints": 
+[{"latitude": 38.1440322072289, "longitude": -76.42351539278884, "altitude": 200}, {"latitude": 38.14537977272054, "longitude": -76.42409915777289, "altitude": 200}, {"latitude": 38.14478624012551, "longitude": -76.42553464487882, "altitude": 200}, {"latitude": 38.144039638960834, "longitude": -76.42541193967149, "altitude": 200}, {"latitude": 38.142097646452335, "longitude": -76.42566019590666, "altitude": 200}, {"latitude": 38.142249015551386, "longitude": -76.42573317006519, "altitude": 200}, {"latitude": 38.1440322072289, "longitude": -76.42351539278884, "altitude": 200}, {"latitude": 38.142578452632264, "longitude": -76.42664191209526, "altitude": 200}],
     "airDropPos": {
         "latitude": 38.1458416666667,
         "longitude": -76.426375

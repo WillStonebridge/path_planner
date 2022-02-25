@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import math
 import numpy as np
+import getopt, sys
  
 class Map:
     """
     Class that uses Json file path of boundaries and obstacles
     to create a environment space
     """
-    def __init__(self, resolution, boundarypoints, obstacles, buffer):
+    def __init__(self, resolution, boundarypoints, obstacles, buffer, search_grid=[]):
         """
         Initialize grid map for a star planning
 
@@ -20,7 +21,6 @@ class Map:
         """ 
 
         min = np.amin(boundarypoints, axis = 0)
-      
         self.min_lat = min[0]
         self.min_lon = min[1]
 
@@ -37,7 +37,15 @@ class Map:
         self.calc_grid_bounds(boundarypoints)                           # finds values for max and map widths 
         self.obstacle_map = None                                        # map of obstacles (initialized to none)
         self.calc_obstacle_map(obstacles, boundarypoints, buffer)       # creates map of obstacles and boundaries, stores it into a 2D list in obstacle_map
+        if search_grid:
+           print("Initializing with Search Grid")
+           for search_point in search_grid:
+               search_point[0], search_point[1] = self.decimal_to_cartesian(search_point[0], search_point[1], self.min_lat, self.min_lon)
+           self.search_grid = self.create_search_grid(search_grid)
+
  
+    #def create_search_grid(search_grid):
+         
 
     def calc_bearing(self, lat1, lon1, lat2, lon2):
         lat1 = math.radians(lat1)
@@ -103,7 +111,6 @@ class Map:
         self.map_x_width = round(self.cart_max_x / self.resolution)
 
     def calc_obstacle_map(self, obstacles, boundarypoints, buffer):
-
         boundaryPath = mpath.Path(boundarypoints)
         self.obstacle_map = [[False for _ in range(self.map_y_width)] for _ in range(self.map_x_width)]
         for initial_x in range(self.map_x_width):
@@ -117,16 +124,32 @@ class Map:
                         if math.hypot(obstacle[0] - x, obstacle[1] - y) - self.buffer <= obstacle[2] * 0.3048:
                             self.obstacle_map[initial_x][initial_y] = True
                             break
-        return self.obstacle_map
     
-def main():
-    mission_data = "interop_example.json"
+def main(argumentList):
+    mission_data = "../../mission_plan/interop_example.json"
     resolution = 10
     buffer = 0
+
+    options = "r:b:i:"
+    long_options = ["file"]
+    try:
+        # Parsing argument
+        arguments, values = getopt.getopt(argumentList, options, long_options) 
+    except getopt.GetoptError:
+        print('Options:\n -i <inputfile> \n -r <resolution meters> -b <buffer meters>')
+        sys.exit(2)
+    for opt, arg in arguments:
+        if opt == '-i':
+            mission_data = arg
+        elif opt == '-r':
+            resolution = int(arg)
+        elif opt == '-b':
+            buffer = int(arg)
     file = json.load(open(mission_data, 'rb'))
     waypoints = []
     boundarypoints = []
     obstacles = []
+    searchGridPoints = []
     for waypoint in file["waypoints"]:
             waypoints += [[waypoint["latitude"],
                                 waypoint["longitude"], waypoint["altitude"]]]
@@ -139,8 +162,13 @@ def main():
     for obstacle in file["stationaryObstacles"]:
         obstacles += [[obstacle["latitude"],
                         obstacle["longitude"], obstacle["radius"]]]
+
+    for search in file["searchGridPoints"]:
+        searchGridPoints += [[search["latitude"],
+                        search["longitude"]]]
+
+    print(waypoints)
     map = Map(resolution, boundarypoints, obstacles, buffer)
-    
     valid = []
     for x in range(len(map.obstacle_map)):
         for y in range(len(map.obstacle_map[x])):
@@ -150,10 +178,22 @@ def main():
 
     for node in valid:
         plt.plot(node[0], node[1], '.k')
+
+    wp_xi = []
+    wp_yi = []
+    i = 1
+    for waypoint in waypoints:
+        wp_x,wp_y = map.decimal_to_cartesian(waypoint[0], waypoint[1], map.min_lat, map.min_lon)
+        wp_xi.append(round(map.transform_to_map_index(wp_x)))
+        wp_yi.append(round(map.transform_to_map_index(wp_y)))
+        plt.text(round(map.transform_to_map_index(wp_x)),round(map.transform_to_map_index(wp_y)), str(i), fontsize=10)
+        i += 1
+
+    plt.plot(wp_xi,wp_yi)
     plt.grid(True)
     plt.axis("equal")
     plt.show()
 
 if __name__ == "__main__":
-    main()    
+    main(sys.argv[1:])    
     
