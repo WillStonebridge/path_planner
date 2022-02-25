@@ -77,7 +77,9 @@ class RRTDubins(RRT):
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
-        self.max_iter = round((self.max_radius - self.min_radius)/10 * 100) + 50
+        self.max_iter = 1500
+        self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
+        # self.max_iter = round(((self.max_radius - self.min_radius)/5 + 1) * 100) 
 
     def planning(self, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
         """
@@ -90,12 +92,16 @@ class RRTDubins(RRT):
         self.radius = self.max_radius
         self.curvature = 1/self.radius
         new_node = None
+        print(self.iteration)
         print("max iterations is " + str(self.max_iter))
-        print(self.max_iter)
+        
         for i in range(self.max_iter):
-            if i != 0 and i % 50 == 0:
+            if i != 0 and i % self.iteration == 0:
+                
                 self.radius = max(self.radius-5,self.min_radius)
                 self.curvature = 1/self.radius
+            
+            print(self.radius)
             
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
