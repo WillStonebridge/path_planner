@@ -9,17 +9,11 @@ import json
 import time
 from tkinter.tix import Tree
 from xxlimited import new
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../DubinsPath/")
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../RRT/")
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from Mapping import Map
 
