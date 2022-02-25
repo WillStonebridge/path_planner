@@ -91,11 +91,12 @@ class RRTDubins(RRT):
         self.curvature = 1/self.radius
         new_node = None
         print("max iterations is " + str(self.max_iter))
+        print(self.max_iter)
         for i in range(self.max_iter):
             if i != 0 and i % 50 == 0:
                 self.radius = max(self.radius-5,self.min_radius)
                 self.curvature = 1/self.radius
-            print(self.radius)
+            
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
