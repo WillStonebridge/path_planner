@@ -123,6 +123,7 @@ int main(int argc, char **argv)
         wp.x_lat          = route[i]["latitude"].GetFloat();
         wp.y_long         = route[i]["longitude"].GetFloat();
         wp.z_alt          = route[i]["altitude"].GetFloat();
+        wp.param4         = 1;
         wp_push_srv.request.waypoints.push_back(wp);
         ROS_INFO("\n Frame: %d\n Commmand: %d \n Is_current: %d \n autocontinue: %d \n lat: %.6f \n long: %.6f \n alt: %.6f\n", wp.frame, wp.command, wp.is_current, wp.autocontinue, wp.x_lat, wp.y_long, wp.z_alt);
 	}
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
 
 // First WP of Landing Sequence (lining up w/ runway/decent route)
     wp.frame          = mavros_msgs::Waypoint::FRAME_GLOBAL_REL_ALT;
-    wp.command        = mavros_msgs::CommandCode::NAV_WAYPOINT;
+    wp.command        = mavros_msgs::CommandCode::NAV_LOITER_TO_ALT;
     wp.is_current     = false;
     wp.autocontinue   = true;
     wp.x_lat          = route[route.Size() - 2]["latitude"].GetFloat();
@@ -189,22 +190,22 @@ int main(int argc, char **argv)
     while(ros::ok()){
     // SITL Testing ONLY: Comment Out for Flight
         //ARM and Sets Mode
-        if( !current_state.armed &&
-            (ros::Time::now() - last_request > ros::Duration(5.0))){
-            if( arming_client.call(arm_cmd) &&
-                arm_cmd.response.success){
-                ROS_INFO("Vehicle armed");
-            }
-            last_request = ros::Time::now();
-        }
-        else if ((current_state.mode != "AUTO.MISSION" && current_state.mode != "AUTO.RTL") &&
-                (ros::Time::now() - last_request > ros::Duration(5.0))) {
-            if( set_mode_client.call(auto_set_mode) &&
-                auto_set_mode.response.mode_sent){
-                ROS_INFO("AUTO.MISSION enabled");
-            }
-            last_request = ros::Time::now();
-        }
+     //   if( !current_state.armed &&
+     //       (ros::Time::now() - last_request > ros::Duration(5.0))){
+     //       if( arming_client.call(arm_cmd) &&
+     //           arm_cmd.response.success){
+     //           ROS_INFO("Vehicle armed");
+     //       }
+     //       last_request = ros::Time::now();
+     //   }
+     //   else if ((current_state.mode != "AUTO.MISSION" && current_state.mode != "AUTO.RTL") &&
+     //           (ros::Time::now() - last_request > ros::Duration(5.0))) {
+     //       if( set_mode_client.call(auto_set_mode) &&
+     //           auto_set_mode.response.mode_sent){
+     //           ROS_INFO("AUTO.MISSION enabled");
+     //       }
+     //       last_request = ros::Time::now();
+     //   }
     // Comment to here
 
     //TODO Include code for UGV drop here 
