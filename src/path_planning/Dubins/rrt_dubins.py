@@ -5,7 +5,7 @@ from operator import index
 import os
 from pickle import TRUE
 import random
-import sys
+import sys, getopt
 import json
 import time
 from tkinter.tix import Tree
@@ -240,10 +240,27 @@ class RRTDubins(RRT):
         return path
 
 
-def main():
+def main(argv):
 
     altitude = 200
-    mission_data = "interop_example.json"
+    mission_data = "../../../mission_plan/interop_example.json"
+
+    options = "r:b:i:"
+    long_options = ["file"]
+    try:
+        # Parsing argument
+        arguments, values = getopt.getopt(argv, options, long_options) 
+    except getopt.GetoptError:
+        print('Options:\n -i <inputfile> \n -r <resolution meters> -b <buffer meters>')
+        sys.exit(2)
+    for opt, arg in arguments:
+        if opt == '-i':
+            mission_data = arg
+        elif opt == '-r':
+            resolution = float(arg)
+        elif opt == '-b':
+            buffer = int(arg)
+
     file = json.load(open(mission_data, 'rb'))
     waypoints = []
     boundarypoints = []
@@ -349,4 +366,4 @@ def main():
         file.write(blank)   
 
 if __name__ == '__main__':
-    main()
+    main(main(sys.argv[1:]))

@@ -39,8 +39,13 @@ class Map:
         self.calc_obstacle_map(obstacles, boundarypoints, buffer)       # creates map of obstacles and boundaries, stores it into a 2D list in obstacle_map
         if search_grid:
            print("Initializing with Search Grid")
+           for search_point in search_grid:
+               search_point[0], search_point[1] = self.decimal_to_cartesian(search_point[0], search_point[1], self.min_lat, self.min_lon)
+           self.search_grid = self.create_search_grid(search_grid)
 
  
+    #def create_search_grid(search_grid):
+         
 
     def calc_bearing(self, lat1, lon1, lat2, lon2):
         lat1 = math.radians(lat1)
@@ -163,7 +168,7 @@ def main(argumentList):
                         search["longitude"]]]
 
     print(waypoints)
-    map = Map(resolution, boundarypoints, obstacles, buffer, searchGridPoints)
+    map = Map(resolution, boundarypoints, obstacles, buffer)
     valid = []
     for x in range(len(map.obstacle_map)):
         for y in range(len(map.obstacle_map[x])):
