@@ -501,7 +501,7 @@ def getMinMaxGrid(searchGridPoints):
     
     return minLat, minLon, maxLat, maxLon, minDist, minDistInd, maxXSearch, maxYSearch, minX, minY
 
-def convertDataToFeet(searchGridPoints, stationaryObstacles):
+def convertDataToFeet(searchGridPoints, stationaryObstacles, minLat, minLon):
     feetSearchGridPoints = []
     feetStationaryObstacles = []
     
@@ -521,235 +521,238 @@ constAlt = 120
 cameraWidth = 130
 inputFile = "../../../mission_plan/interop_example.json"
 #numLoops = [0, 0, 3]
-
-#cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
-
-# Import data from interop_example
-searchGridPoints, stationaryObstacles = getSearchAndObPts(inputFile)
-
-# Set grid values
-minLat, minLon, maxLat, maxLon, minDist, minDistInd, maxXSearch, maxYSearch, minX, minY = getMinMaxGrid(searchGridPoints)
-
-# Convert data to feet
-feetSearchGridPoints, feetStationaryObstacles = convertDataToFeet(searchGridPoints, stationaryObstacles)
-
-
-for i in range(5):
-    obstacleInGrid(feetSearchGridPoints, feetStationaryObstacles)
-feetStationaryObstacles = sorted(feetStationaryObstacles, key=lambda x: x['longitude'])
-
-tempSortedSearch = sorted(feetSearchGridPoints, key=lambda x: x["longitude"])
-
-
-
-
-extraTemp = []
-for i in tempSortedSearch:
-    if {"latitude" : i["latitude"], "longitude" : i["longitude"]} not in extraTemp:
-        extraTemp.append(i)
-
-tempSortedSearch = extraTemp
-
-cells = [Cell([], 0)]
-
-ct = 0
-for i in feetStationaryObstacles:
-    ct += 1
-    cells.append(Cell([], ct))
+def runProgram(constAlt, cameraWidth, inputFile):
+    #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
     
-
-
-curCell = 0
-i = 0
-while i < len(tempSortedSearch):
-    if (tempSortedSearch[i]["longitude"] < feetStationaryObstacles[curCell]["longitude"]):
-        cells[curCell].addPt({"longitude" : tempSortedSearch[i]["longitude"], "latitude" : tempSortedSearch[i]["latitude"]})
+    # Import data from interop_example
+    searchGridPoints, stationaryObstacles = getSearchAndObPts(inputFile)
+    
+    # Set grid values
+    minLat, minLon, maxLat, maxLon, minDist, minDistInd, maxXSearch, maxYSearch, minX, minY = getMinMaxGrid(searchGridPoints)
+    
+    # Convert data to feet
+    feetSearchGridPoints, feetStationaryObstacles = convertDataToFeet(searchGridPoints, stationaryObstacles, minLat, minLon)
+    
+    
+    for i in range(5):
+        obstacleInGrid(feetSearchGridPoints, feetStationaryObstacles)
+    feetStationaryObstacles = sorted(feetStationaryObstacles, key=lambda x: x['longitude'])
+    
+    tempSortedSearch = sorted(feetSearchGridPoints, key=lambda x: x["longitude"])
+    
+    
+    
+    
+    extraTemp = []
+    for i in tempSortedSearch:
+        if {"latitude" : i["latitude"], "longitude" : i["longitude"]} not in extraTemp:
+            extraTemp.append(i)
+    
+    tempSortedSearch = extraTemp
+    
+    cells = [Cell([], 0)]
+    
+    ct = 0
+    for i in feetStationaryObstacles:
+        ct += 1
+        cells.append(Cell([], ct))
+        
+    
+    
+    curCell = 0
+    i = 0
+    while i < len(tempSortedSearch):
+        if (tempSortedSearch[i]["longitude"] < feetStationaryObstacles[curCell]["longitude"]):
+            cells[curCell].addPt({"longitude" : tempSortedSearch[i]["longitude"], "latitude" : tempSortedSearch[i]["latitude"]})
+            i += 1
+        elif (curCell < len(feetStationaryObstacles) - 1):
+            curCell += 1
+        else:
+            curCell += 1
+            break
+    
+    while i < len(tempSortedSearch):
+        cells[curCell].addPt(tempSortedSearch[i])
         i += 1
-    elif (curCell < len(feetStationaryObstacles) - 1):
-        curCell += 1
-    else:
-        curCell += 1
-        break
-
-while i < len(tempSortedSearch):
-    cells[curCell].addPt(tempSortedSearch[i])
-    i += 1
-
-
-
-tempxgrid = []
-tempygrid = []
-
-
-for i in tempSortedSearch:
-    tempxgrid.append(i["longitude"])
-    tempygrid.append(i["latitude"])
-
-plt.figure(1)
-
-
-
-plt.scatter(tempxgrid, tempygrid)
-
-for i in range(len(tempSortedSearch)):
-    plt.text(tempSortedSearch[i]["longitude"], tempSortedSearch[i]["latitude"], str(i))
-    
-cells[0].addPt(intersectionPtUp(feetStationaryObstacles[0], feetSearchGridPoints))
-cells[0].addPt(intersectionPtDown(feetStationaryObstacles[0], feetSearchGridPoints))
-
-cells[0].orderPoints()
-
-tempPts = getObstaclePts(feetStationaryObstacles[0], math.pi / 2, cameraWidth)
-
-for i in range(len(cells[0].searchPts)):
-    if cells[0].searchPts[i]["longitude"] == feetStationaryObstacles[0]["longitude"]:
-        for j in tempPts:
-            cells[0].insertPt(i, j)
-        break
-
-cells[len(cells) - 1].addPt(intersectionPtUp(feetStationaryObstacles[len(feetStationaryObstacles) - 1], feetSearchGridPoints))
-cells[len(cells) - 1].addPt(intersectionPtDown(feetStationaryObstacles[len(feetStationaryObstacles) - 1], feetSearchGridPoints))
-
-cells[len(cells) - 1].orderPoints()
-
-tempPts = getObstaclePts(feetStationaryObstacles[len(feetStationaryObstacles) - 1], math.pi * 3/2, cameraWidth)
-
-for i in range(len(cells[len(cells) - 1].searchPts)):
-    if cells[len(cells) - 1].searchPts[i]["longitude"] == feetStationaryObstacles[len(feetStationaryObstacles) - 1]["longitude"]:
-        for j in tempPts:
-            cells[len(cells) - 1].insertPt(i+1, j)
-        break
-    
-for i in range(1, len(cells) - 1):
-    cells[i].addPt(intersectionPtUp(feetStationaryObstacles[i-1], feetSearchGridPoints))
-    cells[i].addPt(intersectionPtDown(feetStationaryObstacles[i-1], feetSearchGridPoints))
-    
-    cells[i].addPt(intersectionPtUp(feetStationaryObstacles[i], feetSearchGridPoints))
-    cells[i].addPt(intersectionPtDown(feetStationaryObstacles[i], feetSearchGridPoints))
     
     
-    cells[i].orderPoints()
     
-    tempPts = getObstaclePts(feetStationaryObstacles[i], math.pi / 2, cameraWidth)
+    tempxgrid = []
+    tempygrid = []
     
-    for j in range(len(cells[i].searchPts)):
-        if cells[i].searchPts[j]["longitude"] == feetStationaryObstacles[i]["longitude"]:
-            for k in tempPts:
-                cells[i].insertPt(j, k)
+    
+    for i in tempSortedSearch:
+        tempxgrid.append(i["longitude"])
+        tempygrid.append(i["latitude"])
+    
+    plt.figure(1)
+    
+    
+    
+    plt.scatter(tempxgrid, tempygrid)
+    
+    for i in range(len(tempSortedSearch)):
+        plt.text(tempSortedSearch[i]["longitude"], tempSortedSearch[i]["latitude"], str(i))
+        
+    cells[0].addPt(intersectionPtUp(feetStationaryObstacles[0], feetSearchGridPoints))
+    cells[0].addPt(intersectionPtDown(feetStationaryObstacles[0], feetSearchGridPoints))
+    
+    cells[0].orderPoints()
+    
+    tempPts = getObstaclePts(feetStationaryObstacles[0], math.pi / 2, cameraWidth)
+    
+    for i in range(len(cells[0].searchPts)):
+        if cells[0].searchPts[i]["longitude"] == feetStationaryObstacles[0]["longitude"]:
+            for j in tempPts:
+                cells[0].insertPt(i, j)
             break
     
-    tempPts = getObstaclePts(feetStationaryObstacles[i-1], math.pi * 3 / 2, cameraWidth)
+    cells[len(cells) - 1].addPt(intersectionPtUp(feetStationaryObstacles[len(feetStationaryObstacles) - 1], feetSearchGridPoints))
+    cells[len(cells) - 1].addPt(intersectionPtDown(feetStationaryObstacles[len(feetStationaryObstacles) - 1], feetSearchGridPoints))
     
-    for j in range(len(cells[i].searchPts)):
-        if cells[i].searchPts[j]["longitude"] == feetStationaryObstacles[i - 1]["longitude"]:
-            for k in tempPts:
-                cells[i].insertPt(j + 1, k)
+    cells[len(cells) - 1].orderPoints()
+    
+    tempPts = getObstaclePts(feetStationaryObstacles[len(feetStationaryObstacles) - 1], math.pi * 3/2, cameraWidth)
+    
+    for i in range(len(cells[len(cells) - 1].searchPts)):
+        if cells[len(cells) - 1].searchPts[i]["longitude"] == feetStationaryObstacles[len(feetStationaryObstacles) - 1]["longitude"]:
+            for j in tempPts:
+                cells[len(cells) - 1].insertPt(i+1, j)
             break
-
-
-
-for i in cells:
-    i.addStartPt()    
-    i.plot()
+        
+    for i in range(1, len(cells) - 1):
+        cells[i].addPt(intersectionPtUp(feetStationaryObstacles[i-1], feetSearchGridPoints))
+        cells[i].addPt(intersectionPtDown(feetStationaryObstacles[i-1], feetSearchGridPoints))
+        
+        cells[i].addPt(intersectionPtUp(feetStationaryObstacles[i], feetSearchGridPoints))
+        cells[i].addPt(intersectionPtDown(feetStationaryObstacles[i], feetSearchGridPoints))
+        
+        
+        cells[i].orderPoints()
+        
+        tempPts = getObstaclePts(feetStationaryObstacles[i], math.pi / 2, cameraWidth)
+        
+        for j in range(len(cells[i].searchPts)):
+            if cells[i].searchPts[j]["longitude"] == feetStationaryObstacles[i]["longitude"]:
+                for k in tempPts:
+                    cells[i].insertPt(j, k)
+                break
+        
+        tempPts = getObstaclePts(feetStationaryObstacles[i-1], math.pi * 3 / 2, cameraWidth)
+        
+        for j in range(len(cells[i].searchPts)):
+            if cells[i].searchPts[j]["longitude"] == feetStationaryObstacles[i - 1]["longitude"]:
+                for k in tempPts:
+                    cells[i].insertPt(j + 1, k)
+                break
     
-maxXGrid = maxXSearch
-maxYGrid = maxYSearch
-minXGrid = 0
-minYGrid = 0
-
-for i in feetStationaryObstacles:
-    if (i["latitude"] + i["radius"] > maxYGrid):
-        maxYGrid = i["latitude"] + i["radius"]
-    if (i["longitude"] + i["radius"] > maxXGrid):
-        maxXGrid = i["longitude"] + i["radius"]
-    if (i["latitude"] - i["radius"] < minYGrid):
-        minYGrid = i["latitude"] - i["radius"]
-    if (i["longitude"] - i["radius"] < minXGrid):
-        minXGrid = i["longitude"] - i["radius"]
-
-gridLength = maxXGrid - minXGrid
-gridHeight = maxYGrid - minYGrid
-minXGrid = -0.1 * gridLength
-maxXGrid = gridLength * 1.1
-minYGrid = -0.1 * gridHeight
-maxYGrid = gridHeight * 1.1
-gridLength = maxXGrid - minXGrid
-gridHeight = maxYGrid - minYGrid
-
-# variables to edit based on the physical plane
-
-
-xWayPts = []
-yWayPts = []
-altWayPts = []
-
-maxLon = feetSearchGridPoints[0]["longitude"]
-for i in range(len(feetSearchGridPoints)):
-    curLon = feetSearchGridPoints[i]["longitude"]
-    if (curLon > maxLon):
-        maxLon = curLon
-        minDistInd = i
-
-feetSearchGridPoints.pop()
-for i in range(minDistInd):
+    
+    
+    for i in cells:
+        i.addStartPt()    
+        i.plot()
+        
+    maxXGrid = maxXSearch
+    maxYGrid = maxYSearch
+    minXGrid = 0
+    minYGrid = 0
+    
+    for i in feetStationaryObstacles:
+        if (i["latitude"] + i["radius"] > maxYGrid):
+            maxYGrid = i["latitude"] + i["radius"]
+        if (i["longitude"] + i["radius"] > maxXGrid):
+            maxXGrid = i["longitude"] + i["radius"]
+        if (i["latitude"] - i["radius"] < minYGrid):
+            minYGrid = i["latitude"] - i["radius"]
+        if (i["longitude"] - i["radius"] < minXGrid):
+            minXGrid = i["longitude"] - i["radius"]
+    
+    gridLength = maxXGrid - minXGrid
+    gridHeight = maxYGrid - minYGrid
+    minXGrid = -0.1 * gridLength
+    maxXGrid = gridLength * 1.1
+    minYGrid = -0.1 * gridHeight
+    maxYGrid = gridHeight * 1.1
+    gridLength = maxXGrid - minXGrid
+    gridHeight = maxYGrid - minYGrid
+    
+    # variables to edit based on the physical plane
+    
+    
+    xWayPts = []
+    yWayPts = []
+    altWayPts = []
+    
+    maxLon = feetSearchGridPoints[0]["longitude"]
+    for i in range(len(feetSearchGridPoints)):
+        curLon = feetSearchGridPoints[i]["longitude"]
+        if (curLon > maxLon):
+            maxLon = curLon
+            minDistInd = i
+    
+    feetSearchGridPoints.pop()
+    for i in range(minDistInd):
+        feetSearchGridPoints.append(feetSearchGridPoints[0])
+        feetSearchGridPoints.pop(0)
     feetSearchGridPoints.append(feetSearchGridPoints[0])
-    feetSearchGridPoints.pop(0)
-feetSearchGridPoints.append(feetSearchGridPoints[0])
-
-for i in range(len(cells)):
-    createPoints(2, cells[i-1].searchPts, 0, feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
-
-wayPts = []
-
-for i in range(len(xWayPts)):
-    if (inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles) != -1):    
-        #print("Point x:" + str(xWayPts[i] + ", y: " + str(yWayPts[i]) + " is in an obstacle"))
-        print("oopsie")
-    else:
-        curLonX, curLatX = cartesian_to_decimal(xWayPts[i], yWayPts[i], minLat, minLon)
-        wayPts.append({"latitude" : curLatX, "longitude" : curLonX, "altitude" : altWayPts[i]})
-                
-filepath = "../../../mission_plan/searchpath.json"
-with open(filepath, "w") as file:
-    json.dump(wayPts, file)
-
-
-# boundary points
-xGridPts = []
-yGridPts = []
-
-# obstacle points
-
-
-for pt in feetSearchGridPoints:
-    yGridPts.append(pt["latitude"])
-    xGridPts.append(pt["longitude"])
     
-
-plt.figure(figsize = [5, 5])
-ax = plt.axes([0.1, 0.1, 0.8, 0.8], xlim=(minXGrid, maxXGrid), ylim=(minYGrid, maxYGrid))
-plt.plot(xWayPts, yWayPts, color = "orange", marker = "o", markerfacecolor = "green", markeredgecolor = "green", lineWidth = cameraWidth / gridLength * 5 * 0.8 * 72, markersize = 3) #area
-plt.plot(xWayPts, yWayPts, color = "black", lineWidth = 1)
-plt.plot(xGridPts, yGridPts, color = "blue", linewidth = 3)
-
-
-for i in range(len(xGridPts)):
-    plt.text(xGridPts[i], yGridPts[i], "B" + str(i))
-for i in range(len(feetStationaryObstacles)):
-    ax.scatter([feetStationaryObstacles[i]["longitude"]], [feetStationaryObstacles[i]["latitude"]], s=(2 * feetStationaryObstacles[i]["radius"] / gridLength * 5 * 0.8 * 72) ** 2, c = "yellow", zorder = 3)
-    plt.text(feetStationaryObstacles[i]["longitude"], feetStationaryObstacles[i]["latitude"], "O" + str(i))
-plt.gca().set_aspect('equal', adjustable = 'box')
-plt.xlabel("Horizontal (feet)")
-plt.ylabel("Vertical (feet)")
-plt.title("Map of boundary points, obstacles, and path")
-plt.grid()
-plt.show()
-
-
-
-for i in range(len(xWayPts)):
-    if (not inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)):
-        print("Error: point " + str(i) + " in obstacle " + str(inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)))
-
-
-
+    for i in range(len(cells)):
+        createPoints(2, cells[i-1].searchPts, 0, feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
+    
+    wayPts = []
+    
+    for i in range(len(xWayPts)):
+        if (inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles) != -1):    
+            #print("Point x:" + str(xWayPts[i] + ", y: " + str(yWayPts[i]) + " is in an obstacle"))
+            print("oopsie")
+        else:
+            curLonX, curLatX = cartesian_to_decimal(xWayPts[i], yWayPts[i], minLat, minLon)
+            wayPts.append({"latitude" : curLatX, "longitude" : curLonX, "altitude" : altWayPts[i]})
+                    
+    filepath = "../../../mission_plan/searchpath.json"
+    with open(filepath, "w") as file:
+        json.dump(wayPts, file)
+    
+    
+    # boundary points
+    xGridPts = []
+    yGridPts = []
+    
+    # obstacle points
+    
+    
+    for pt in feetSearchGridPoints:
+        yGridPts.append(pt["latitude"])
+        xGridPts.append(pt["longitude"])
+        
+    
+    plt.figure(figsize = [5, 5])
+    ax = plt.axes([0.1, 0.1, 0.8, 0.8], xlim=(minXGrid, maxXGrid), ylim=(minYGrid, maxYGrid))
+    plt.plot(xWayPts, yWayPts, color = "orange", marker = "o", markerfacecolor = "green", markeredgecolor = "green", lineWidth = cameraWidth / gridLength * 5 * 0.8 * 72, markersize = 3) #area
+    plt.plot(xWayPts, yWayPts, color = "black", lineWidth = 1)
+    plt.plot(xGridPts, yGridPts, color = "blue", linewidth = 3)
+    
+    
+    for i in range(len(xGridPts)):
+        plt.text(xGridPts[i], yGridPts[i], "B" + str(i))
+    for i in range(len(feetStationaryObstacles)):
+        ax.scatter([feetStationaryObstacles[i]["longitude"]], [feetStationaryObstacles[i]["latitude"]], s=(2 * feetStationaryObstacles[i]["radius"] / gridLength * 5 * 0.8 * 72) ** 2, c = "yellow", zorder = 3)
+        plt.text(feetStationaryObstacles[i]["longitude"], feetStationaryObstacles[i]["latitude"], "O" + str(i))
+    plt.gca().set_aspect('equal', adjustable = 'box')
+    plt.xlabel("Horizontal (feet)")
+    plt.ylabel("Vertical (feet)")
+    plt.title("Map of boundary points, obstacles, and path")
+    plt.grid()
+    plt.show()
+    
+    
+    
+    for i in range(len(xWayPts)):
+        if (not inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)):
+            print("Error: point " + str(i) + " in obstacle " + str(inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)))
+    
+    return wayPts
+    
+def main():
+    runProgram(constAlt, cameraWidth, inputFile)
+    
