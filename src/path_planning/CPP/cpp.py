@@ -429,22 +429,47 @@ def getSearchAndObPts(inputFile):
     # import boundary points
     searchGridPoints = interop_example_obj["searchGridPoints"]
     stationaryObstacles = interop_example_obj["stationaryObstacles"]
-    
-    searchPts = []
-    obstaclePts = []
+        
+    return searchGridPoints, stationaryObstacles
+
+def getMinMaxGrid(searchGridPoints):
+    minLat = 10000
+    maxLat = -10000
+    minLon = 10000
+    maxLon = -10000
+    minDist = 999999
+    minDistInd = 0
     
     for pt in searchGridPoints:
-        searchPts += [[pt["latitude"], pt["longitude"]]]
-        
-    searchPts.append(list(searchPts[0]))
+        if (pt["latitude"] < minLat):
+            minLat = pt["latitude"]
+        if (pt["latitude"] > maxLat):
+            maxLat = pt["latitude"]
+        if (pt["longitude"] > maxLon):
+            maxLon = pt["longitude"]
+        if (pt["longitude"] < minLon):
+            minLon = pt["longitude"]
     
-        
-    for ob in stationaryObstacles:
-        obstaclePts += [[ob["latitude"], ob["longitude"], ob["radius"]]]
-        
-    return searchPts, obstaclePts, searchGridPoints, stationaryObstacles
+    minX = 0
+    minY = 0
+    maxYSearch, maxXSearch = decimal_to_cartesian(maxLat, maxLon, minLat, minLon)
+    
+    return minLat, minLon, maxLat, maxLon, minDist, minDistInd, maxXSearch, maxYSearch, minX, minY
 
-def 
+def convertDataToFeet(searchGridPoints, stationaryObstacles):
+    feetSearchGridPoints = []
+    feetStationaryObstacles = []
+    
+    for i in searchGridPoints:
+        curLat, curLon = decimal_to_cartesian(i["latitude"], i["longitude"], minLat, minLon)
+        feetSearchGridPoints.append({"latitude" : curLat, "longitude" : curLon})
+    
+    for i in stationaryObstacles:
+        curLat, curLon = decimal_to_cartesian(i["latitude"], i["longitude"], minLat, minLon)
+        feetStationaryObstacles.append({"latitude" : curLat, "radius" : i["radius"], "longitude" : curLon, "height" : i["height"]})
+    
+    return feetSearchGridPoints, feetStationaryObstacles
+    
 # START PROGRAM
 
 constAlt = 120
@@ -454,55 +479,15 @@ numLoops = [1, 1, 1]
 
 #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
 
-searchPts, obstaclePts, searchGridPoints, stationaryObstacles = getSearchAndObPts(inputFile)
+# Import data from interop_example
+searchGridPoints, stationaryObstacles = getSearchAndObPts(inputFile)
 
-for pt in searchGridPoints:
-    searchPts += [[pt["latitude"], pt["longitude"]]]
-    
-searchPts.append(list(searchPts[0]))
+# Set grid values
+minLat, minLon, maxLat, maxLon, minDist, minDistInd, maxXSearch, maxYSearch, minX, minY = getMinMaxGrid(searchGridPoints)
 
-    
-for ob in stationaryObstacles:
-    obstaclePts += [[ob["latitude"], ob["longitude"], ob["radius"]]]
-    
+# Convert data to feet
+feetSearchGridPoints, feetStationaryObstacles = convertDataToFeet(searchGridPoints, stationaryObstacles)
 
-
-# create waypoints
-minLat = 10000
-maxLat = -10000
-minLon = 10000
-maxLon = -10000
-minDist = 999999
-minDistInd = 0
-
-for pt in searchGridPoints:
-    if (pt["latitude"] < minLat):
-        minLat = pt["latitude"]
-    if (pt["latitude"] > maxLat):
-        maxLat = pt["latitude"]
-    if (pt["longitude"] > maxLon):
-        maxLon = pt["longitude"]
-    if (pt["longitude"] < minLon):
-        minLon = pt["longitude"]
-
-minX = 0
-minY = 0
-maxYSearch, maxXSearch = decimal_to_cartesian(maxLat, maxLon, minLat, minLon)
-        
-
-
-feetSearchGridPoints = []
-feetStationaryObstacles = []
-
-for i in searchGridPoints:
-    curLat, curLon = decimal_to_cartesian(i["latitude"], i["longitude"], minLat, minLon)
-    feetSearchGridPoints.append({"latitude" : curLat, "longitude" : curLon})
-
-for i in stationaryObstacles:
-    curLat, curLon = decimal_to_cartesian(i["latitude"], i["longitude"], minLat, minLon)
-    feetStationaryObstacles.append({"latitude" : curLat, "radius" : i["radius"], "longitude" : curLon, "height" : i["height"]})
-
-#feetStationaryObstacles.append({"latitude" : 900, "radius" : 150, "longitude" : 1500, "height" : 50})
 
 for i in range(5):
     obstacleInGrid(feetSearchGridPoints, feetStationaryObstacles)
