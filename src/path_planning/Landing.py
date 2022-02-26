@@ -120,10 +120,10 @@ def convert_obstacles(map):
 
     for x in obstacles_lat_long:
         lat = x["latitude"]
-        long = x["longitude"]
+        lon = x["longitude"]
         radius = x["radius"]
 
-        coord = map.decimal_to_cartesian(map.min_lat, map.min_lon, lat, long)
+        coord = map.decimal_to_cartesian(lat, lon, map.min_lat, map.min_lon)
 
         obstacle = []
         obstacle.append(coord[0], coord[1], radius)
@@ -210,8 +210,8 @@ def calc_landing(map, start_pos, runway, max_angle):
     run_start = runway[0]
     run_end = runway[1]
 
-    run_start_xy = map.decimal_to_cartesian(map.min_lat, map.min_lon, run_start["latitude"], run_start["longitude"])
-    run_end_xy = map.decimal_to_cartesian(map.min_lat, map.min_lon, run_end["latitude"], run_end["longitude"])
+    run_start_xy = map.decimal_to_cartesian(run_start["latitude"], run_start["longitude"], map.min_lat, map.min_lon)
+    run_end_xy = map.decimal_to_cartesian(run_end["latitude"], run_end["longitude"], map.min_lat, map.min_lon)
 
     run_x = run_start_xy[0] - run_end_xy[0]
     run_y = run_start_xy[1] - run_end_xy[1]
@@ -239,14 +239,14 @@ def calc_landing(map, start_pos, runway, max_angle):
     landing_coords = []
     if correction_point is not None:
         correct_dict = dict()
-        correct_coords = map.cartesian_to_decimal(map.min_lat, map.min_lon, correction_point[0], correction_point[1])
+        correct_coords = map.cartesian_to_decimal(correction_point[0], correction_point[1], map.min_lat, map.min_lon)
         correct_dict["latitude"] = correct_coords[0]
         correct_dict["longitude"] = correct_coords[1]
         correct_dict["altitude"] = start_alt
         landing_coords.append(correct_dict)
     
     glide_dict = dict()
-    glide_coords = map.cartesian_to_decimal(map.min_lat, map.min_lon, glide_path[0][0], glide_path[0][1])
+    glide_coords = map.cartesian_to_decimal(glide_path[0][0], glide_path[0][1], map.min_lat, map.min_lon)
     glide_dict["latitude"] = glide_coords[0]
     glide_dict["longitude"] = glide_coords[1]
     glide_dict["altitude"] = glide_alt
