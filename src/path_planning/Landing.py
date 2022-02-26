@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import matplotlib.path as mpath
 
 # returns the angle from 1 to 2 in rads
 def find_line_angle(line):
@@ -68,15 +69,15 @@ def find_triangle_area(circle, line):
 
     return (s * (s - a) * (s - b) * (s - c)) ** 0.5
 
-def check_path_intersection(obstacles, line):
+def check_path_intersection(map, obstacles, line):
+    if not map.obstacle_map[line[0][0]][line[0][1]] or not map.obstacle_map[line[1][0]][line[1][1]]:
+        return True
 
     for circle in obstacles:  # iterates through every obstacle
 
         # gets the parameters of the circle
         circle_center = [circle[0], circle[1]]
         radius = circle[2]
-
-        # TODO convert to cartesian coords
 
         # gets the parameters of the line
         line_angle = find_line_angle(line)
@@ -142,11 +143,11 @@ correction point: the point at which the robot should approach the glideslope fr
 
 """
 
-def find_correction_point(runway, glide_slope, radius, obstacles):
+def find_correction_point(map, runway, glide_slope, radius, obstacles):
     # finds the ideal angle from the glide slope to the correction point, which approaches the glide slope at the same angle as the runway
     ideal_angle = find_line_angle([runway[1], runway[0]])
 
-    potential_c_points = find_possible_approaches(ideal_angle, radius, glide_slope, obstacles)
+    potential_c_points = find_possible_approaches(map, ideal_angle, radius, glide_slope, obstacles)
 
     # TODO add buffer here
 
@@ -158,12 +159,12 @@ def find_correction_point(runway, glide_slope, radius, obstacles):
     return None
 
 
-def find_possible_approaches(ideal_angle, radius, glide_slope, obstacles):
+def find_possible_approaches(map, ideal_angle, radius, glide_slope, obstacles):
     possible_c_points = []
 
     # tests the first point which is the ideal approach
     ideal_c_point = find_endpoint(glide_slope, ideal_angle, radius)
-    if check_path_intersection(obstacles, [ideal_c_point, glide_slope]):
+    if check_path_intersection(map, obstacles, [ideal_c_point, glide_slope]):
         possible_c_points.append(ideal_c_point)
     else:
         possible_c_points.append(False)
@@ -180,12 +181,12 @@ def find_possible_approaches(ideal_angle, radius, glide_slope, obstacles):
 
         # checks if either Cpoint intersects an obstacle on its approach, appends false if it does
 
-        if check_path_intersection(obstacles, approach1):
+        if check_path_intersection(map, obstacles, approach1):
             possible_c_points.append(approach1[1])
         else:
             possible_c_points.append(False)
 
-        if check_path_intersection(obstacles, approach2):
+        if check_path_intersection(map, obstacles, approach2):
             possible_c_points.append(approach2[1])
         else:
             possible_c_points.append(False)
@@ -222,7 +223,7 @@ def calc_landing(map, start_pos, runway, max_angle):
     max_path = [run_axis * START_GUESS + run_end_xy, run_end_xy]
     glide_path = max_path
 
-    while not id.check_path_intersection(map.obstacle_map, glide_path):
+    while not check_path_intersection(map, map.obstacle_map, glide_path):
         glide_path[0] -= run_axis * STEP_SIZE
 
     glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=math.dist(glide_path[0], glide_path[1]))
