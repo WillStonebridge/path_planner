@@ -520,7 +520,7 @@ def convertDataToFeet(searchGridPoints, stationaryObstacles):
 constAlt = 120
 cameraWidth = 130
 inputFile = "../../../mission_plan/interop_example.json"
-numLoops = [0, 0, 3]
+#numLoops = [0, 0, 3]
 
 #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
 
@@ -696,8 +696,8 @@ for i in range(minDistInd):
     feetSearchGridPoints.pop(0)
 feetSearchGridPoints.append(feetSearchGridPoints[0])
 
-for i in range(len(numLoops)):
-    createPoints(2, cells[i-1].searchPts, numLoops[i], feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
+for i in range(len(cells)):
+    createPoints(2, cells[i-1].searchPts, 0, feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
 
 wayPts = []
 
