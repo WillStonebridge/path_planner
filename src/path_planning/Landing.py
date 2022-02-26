@@ -60,9 +60,9 @@ def find_triangle_area(circle, line):
     circle_center = circle[0]
 
     # herons formula is used to calculate area
-    a = math.dist([line[0], circle_center])
-    b = math.dist([line[1], circle_center])
-    c = math.dist(line)
+    a = math.dist(line[0], circle_center)
+    b = math.dist(line[1], circle_center)
+    c = math.dist(line[0], line[1])
 
     s = (a + b + c) / 2
 
@@ -73,8 +73,8 @@ def check_path_intersection(obstacles, line):
     for circle in obstacles:  # iterates through every obstacle
 
         # gets the parameters of the circle
-        circle_center = [circle["latitude"], circle["longitude"]]
-        radius = circle["radius"]
+        circle_center = [circle[0], circle[1]]
+        radius = circle[2]
 
         # TODO convert to cartesian coords
 
@@ -85,7 +85,7 @@ def check_path_intersection(obstacles, line):
 
         # Extra check to see if either point of the line is within the circle
         for point in line:
-            if math.dist([point, circle_center]) < radius:
+            if math.dist(point, circle_center) < radius:
                 return True
 
         # creates a line from the circle center to the line's midpoint
@@ -120,12 +120,14 @@ def convert_obstacles(map):
     for x in obstacles_lat_long:
         lat = x["latitude"]
         long = x["longitude"]
-
         radius = x["radius"]
 
         coord = map.decimal_to_cartesian(map.min_lat, map.min_lon, lat, long)
 
-        obstacles.append(coord)
+        obstacle = []
+        obstacle.append(coord[0], coord[1], radius)
+
+        obstacles.append(obstacle)
 
     return obstacles
 
@@ -151,6 +153,9 @@ def find_correction_point(runway, glide_slope, radius, obstacles):
     for x in range(len(potential_c_points)):
         if potential_c_points[x]:
             return potential_c_points[x]
+
+    print("No correction points found")
+    return None
 
 
 def find_possible_approaches(ideal_angle, radius, glide_slope, obstacles):
@@ -227,7 +232,8 @@ def calc_landing(map, start_pos, runway, max_angle):
     if (glide_angle > max_angle):
         glide_alt = calc_descent(alt_final=0, dist=math.dist(glide_path[0], glide_path[1]), theta=max_angle)
         radius = calc_descent(alt_final=glide_alt, alt_initial=start_alt, theta=max_angle)
-        correction_point = find_correction_point(runway, glide_path, radius, map.obstacle_map)
+        obstacles = convert_obstacles(map)
+        correction_point = find_correction_point(runway, glide_path, radius, obstacles)
 
     landing_coords = []
     if correction_point is not None:
