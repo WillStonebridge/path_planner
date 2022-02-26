@@ -45,7 +45,7 @@ class RRTDubins(RRT):
 
     def __init__(self, start, goal, obstacle_list, rand_area, obstacle_map,map,
                  goal_sample_rate=90,
-                 max_iter=1000,
+                 max_iter=1000, max_radius = 70, min_radius = 50
                  ):
         """
         Setting Parameter
@@ -65,15 +65,15 @@ class RRTDubins(RRT):
         self.obstacle_list = obstacle_list
         self.obstacle_map = obstacle_map
         self.map = map
-        self.max_radius = 70
-        self.min_radius = 20
+        self.max_radius = max_radius
+        self.min_radius = min_radius
         self.radius = 0
         self.radii = []
         self.curvature = 0
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
-        self.max_iter = 3000
+        self.max_iter = max_iter
         self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
         # self.max_iter = round(((self.max_radius - self.min_radius)/5 + 1) * 100) 
 
@@ -110,6 +110,16 @@ class RRTDubins(RRT):
                     self.node_list.append(temp_node)
                     self.radii.append(self.radius)
                     new_node = temp_node
+
+                    if new_node:
+                        last_index = self.search_best_goal_node()
+                        
+                        if last_index: 
+                            
+                            # print("Path Radius: " + str(self.radii[last_index]))
+                            return self.generate_final_course(last_index)
+
+                    
             
             
                 
@@ -122,7 +132,7 @@ class RRTDubins(RRT):
             
             if last_index: 
                 
-                print("Path Radius: " + str(self.radii[last_index]))
+                # print("Path Radius: " + str(self.radii[last_index]))
                 return self.generate_final_course(last_index)
                 
                 
@@ -144,7 +154,7 @@ class RRTDubins(RRT):
         plt.axis([0, 2000, 0, 2000])
         plt.grid(True)
         self.plot_start_goal_arrow()
-        plt.pause(0.01)
+        #plt.pause(0.01)
 
     def plot_start_goal_arrow(self):  # pragma: no cover
         dubins_path_planning.plot_arrow(
@@ -243,7 +253,7 @@ class RRTDubins(RRT):
         
         for i in final_goal_indexes:
             if self.node_list[i].cost == min_cost:
-                print("Path Cost: " + str(self.node_list[i].cost))
+                # print("Path Cost: " + str(self.node_list[i].cost))
                 return i
 
         return None
@@ -323,6 +333,7 @@ def main(argv):
         x_list_way.append(x)
         y_list_way.append(y)
 
+    # print(waypoints)
     
     x_list_obs = []
     y_list_obs = []
@@ -345,7 +356,7 @@ def main(argv):
     start_time = time.time()
     blank = '['
     for i in range(len(x_list_way)-1):
-        print("Waypoint " + str(i))
+        # print("Waypoint " + str(i))
 
     # Set Initial parameters
         if i == 0:
@@ -355,7 +366,7 @@ def main(argv):
             start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
             goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
 
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],obstacle_map,map)
+        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],obstacle_map,map, max_iter=3000)
         #make area the max of the max y/x
         path = rrt_dubins.planning(animation=show_animation)
    
@@ -375,18 +386,17 @@ def main(argv):
             plt.plot([x for x in x_list_bound], [y for y in y_list_bound], 'b')
             plt.plot([x for (x, y,_) in path], [y for (x, y,_) in path], '-r')
             plt.grid(True)
-            plt.pause(1)
-            
+            #plt.pause(1)
 
-    plt.show()    
+    
     
     blank = blank[:-1]
     blank += ']'
-
+    
     elapsed_time = time.time() - start_time
     print(elapsed_time)
+    plt.show()   
     with open('RRT_out.json', 'w') as file:
         file.write(blank)   
-
 if __name__ == '__main__':
     main(sys.argv[1:])
