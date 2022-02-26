@@ -298,9 +298,9 @@ def intersectionPtUp(ob, feetSearchGridPoints):
                 return returnPt
 
 def getObstaclePts(ob, startAng, cameraWidth):
-    numPts = ob["radius"] / 30
+    numPts = ob["radius"] / 50
     
-    ptRad = ob["radius"] + (cameraWidth / 20)
+    ptRad = ob["radius"] + (cameraWidth / 3)
     angle = math.pi * 2 / numPts
     
     pts = []
@@ -401,20 +401,25 @@ def createPoints(mode, feetSearchGridPoints, numLoops, feetStationaryObstacles, 
         cellHeight = maxYPt - minYPt
         
         if (cellWidth < cellHeight):
-            numLoops = round(cellWidth / cameraWidth / 2) - 1
+            minLoops = round(cellWidth / cameraWidth / 2 - cellHeight / cellWidth * 1.5)
         else:
-            numLoops = round(cellHeight / cameraWidth / 2) - 1
+            minLoops = round(cellHeight / cameraWidth / 2 - cellWidth / cellHeight * 1.5)
         cellCenterX = (maxXPt - minXPt) / 2 + minXPt
         cellCenterY = (maxYPt - minYPt) / 2 + minYPt
         
-        
-        for i in range(numLoops):
+        curLoop = 0
+        while (minDistToCenter > cameraWidth * 2 or minLoops > curLoop):
+            curLoop += 1
             for i in range(len(angles)):
                 if (inObstacle(curXPts[i] + cameraWidth * math.cos(angles[i]), curYPts[i] + cameraWidth * math.sin(angles[i]), feetStationaryObstacles) == -1):
                     
                     xWayPts.append(curXPts[i] + cameraWidth * 2 * math.cos(angles[i]))
                     yWayPts.append(curYPts[i] + cameraWidth * 2 * math.sin(angles[i]))
                     
+                    distToCenter = math.sqrt(math.pow(curXPts[i] + cameraWidth * 2 * math.cos(angles[i]) - cellCenterX, 2) + math.pow(curYPts[i] + cameraWidth * 2 * math.sin(angles[i]) - cellCenterY, 2))
+                    
+                    if (distToCenter < minDistToCenter):
+                        minDistToCenter = distToCenter
                     
                 else:
                     angleToPrev = calcAngle(curXPts[i] + cameraWidth * math.cos(angles[i]), curYPts[i] + cameraWidth * math.sin(angles[i]), curXPts[i-1], curYPts[i-1])
@@ -430,6 +435,7 @@ def createPoints(mode, feetSearchGridPoints, numLoops, feetStationaryObstacles, 
                     #testPtX += adder * math.cos(angleToPrev)
                     #testPtY += adder * math.sin(angleToPrev)
                     
+                    print("Point is in obstacle")
                     xWayPts.append(testPtX)
                     yWayPts.append(testPtY)
                     
@@ -514,7 +520,7 @@ def convertDataToFeet(searchGridPoints, stationaryObstacles):
 constAlt = 120
 cameraWidth = 130
 inputFile = "../../../mission_plan/interop_example.json"
-numLoops = [0, 0, 1]
+numLoops = [0, 0, 3]
 
 #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
 
