@@ -44,7 +44,7 @@ class RRTDubins(RRT):
             self.path_yaw = []
 
     def __init__(self, start, goal, obstacle_list, rand_area, obstacle_map,map,
-                 goal_sample_rate=10,
+                 goal_sample_rate=90,
                  max_iter=1000,
                  ):
         """
@@ -65,7 +65,7 @@ class RRTDubins(RRT):
         self.obstacle_list = obstacle_list
         self.obstacle_map = obstacle_map
         self.map = map
-        self.max_radius = 100
+        self.max_radius = 70
         self.min_radius = 20
         self.radius = 0
         self.radii = []
@@ -73,7 +73,9 @@ class RRTDubins(RRT):
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
-        self.max_iter = round((self.max_radius - self.min_radius)/10 * 100) + 50
+        self.max_iter = 3000
+        self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
+        # self.max_iter = round(((self.max_radius - self.min_radius)/5 + 1) * 100) 
 
     def planning(self, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
         """
@@ -86,34 +88,44 @@ class RRTDubins(RRT):
         self.radius = self.max_radius
         self.curvature = 1/self.radius
         new_node = None
-        print("max iterations is " + str(self.max_iter))
+
+        
         for i in range(self.max_iter):
-            if i != 0 and i % 50 == 0:
+            if i != 0 and i % self.iteration == 0:
+                
                 self.radius = max(self.radius-5,self.min_radius)
                 self.curvature = 1/self.radius
-            print(self.radius)
+            
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
+
             if temp_node:
                 index_x = self.map.transform_to_map_index(temp_node.x)
                 index_y = self.map.transform_to_map_index(temp_node.y)
-
+  
+                #CHECK MAP
+            
                 if self.check_path(temp_node) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
                     self.radii.append(self.radius)
                     new_node = temp_node
+            
+            
+                
             # if animation and i % 5 == 0:
 
             #     self.draw_graph(rnd)
             
-        if new_node:  
+        if new_node:
             last_index = self.search_best_goal_node()
             
             if last_index: 
                 
-
+                print("Path Radius: " + str(self.radii[last_index]))
                 return self.generate_final_course(last_index)
+                
+                
 
     def draw_graph(self, rnd=None):  # pragma: no cover
         # plt.clf()
@@ -128,6 +140,7 @@ class RRTDubins(RRT):
 
         plt.plot(self.start.x, self.start.y, "xr")
         plt.plot(self.end.x, self.end.y, "xr")
+        
         plt.axis([0, 2000, 0, 2000])
         plt.grid(True)
         self.plot_start_goal_arrow()
@@ -140,10 +153,14 @@ class RRTDubins(RRT):
             self.end.x, self.end.y, self.end.yaw)
     
     def check_path(self, new_node):
+
        if new_node == None:
             return False
+        
+
 
        for i in range(len(new_node.path_x)):
+            
             index_x = self.map.transform_to_map_index(new_node.path_x[i])
             index_y = self.map.transform_to_map_index(new_node.path_y[i])
             x = (self.check_boundary([round(index_x),round(index_y)]))
@@ -175,9 +192,9 @@ class RRTDubins(RRT):
         return new_node
     
     def check_boundary(self, point):
-
+        
         try:
-
+            
             if self.obstacle_map[point[0]][point[1]]:
                 return False
         except:
@@ -223,8 +240,10 @@ class RRTDubins(RRT):
             return None
 
         min_cost = min([self.node_list[i].cost for i in final_goal_indexes])
+        
         for i in final_goal_indexes:
             if self.node_list[i].cost == min_cost:
+                print("Path Cost: " + str(self.node_list[i].cost))
                 return i
 
         return None
@@ -283,6 +302,8 @@ def main(argv):
 
     min = np.amin(boundarypoints, axis = 0)
     map = Map(10, boundarypoints, obstacles, 0)
+  
+    
 
 
     x_list_bound = []
@@ -317,7 +338,8 @@ def main(argv):
 
     for i in range(len(x_list_obs)):
         obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10))
-    obstacle_map = map.calc_obstacle_map(obstacles,boundarypoints,0)
+    map.calc_obstacle_map(obstacles,boundarypoints,0)
+    obstacle_map = map.obstacle_map
 
     search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50
     start_time = time.time()
@@ -336,7 +358,7 @@ def main(argv):
         rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],obstacle_map,map)
         #make area the max of the max y/x
         path = rrt_dubins.planning(animation=show_animation)
-
+   
         index_list = []
 
         for point in path:
@@ -357,6 +379,7 @@ def main(argv):
             
 
     plt.show()    
+    
     blank = blank[:-1]
     blank += ']'
 
@@ -366,4 +389,4 @@ def main(argv):
         file.write(blank)   
 
 if __name__ == '__main__':
-    main(main(sys.argv[1:]))
+    main(sys.argv[1:])
