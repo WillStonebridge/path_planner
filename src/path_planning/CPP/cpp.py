@@ -298,7 +298,7 @@ def intersectionPtUp(ob, feetSearchGridPoints):
                 return returnPt
 
 def getObstaclePts(ob, startAng, cameraWidth):
-    numPts = ob["radius"] / 50
+    numPts = ob["radius"] / 30
     
     ptRad = ob["radius"] + (cameraWidth / 20)
     angle = math.pi * 2 / numPts
@@ -307,10 +307,16 @@ def getObstaclePts(ob, startAng, cameraWidth):
     
     curAng = startAng
     
+    finAng = curAng + math.pi
     
-    for i in range(round(numPts / 2) + 1):
+    while (curAng <= finAng):
         pts.append({"latitude" : ob["latitude"] + ptRad * math.sin(curAng), "longitude" : ob["longitude"] + ptRad * math.cos(curAng)})
         curAng += angle
+    
+    pts.append({"latitude" : ob["latitude"] + ptRad * math.sin(finAng), "longitude" : ob["longitude"] + ptRad * math.cos(finAng)})
+    #for i in range(round(numPts / 2) + 1):
+    #    pts.append({"latitude" : ob["latitude"] + ptRad * math.sin(curAng), "longitude" : ob["longitude"] + ptRad * math.cos(curAng)})
+    #    curAng += angle
     
     
     return pts
@@ -373,14 +379,43 @@ def createPoints(mode, feetSearchGridPoints, numLoops, feetStationaryObstacles, 
         angles.append(getAngle(ptx, pty, pt1x, pt1y, pt2x, pt2y) + math.pi)
         
         for i in range(len(angles)):
-            curYPts.append(feetSearchGridPoints[i]["latitude"] - 1/2 * cameraWidth * math.sin(angles[i]))
-            curXPts.append(feetSearchGridPoints[i]["longitude"] - 1/2 * cameraWidth * math.cos(angles[i]))
-            
+            curYPts.append(feetSearchGridPoints[i]["latitude"] - 5/4 * cameraWidth * math.sin(angles[i]))
+            curXPts.append(feetSearchGridPoints[i]["longitude"] - 5/4 * cameraWidth * math.cos(angles[i]))
+        
+        minDistToCenter = 99999
+        maxXPt = -99999;
+        minXPt = 99999;
+        maxYPt = -99999;
+        minYPt = 99999;
+        for i in range(len(feetSearchGridPoints)):
+            if (feetSearchGridPoints[i]["latitude"] > maxYPt):
+                maxYPt = feetSearchGridPoints[i]["latitude"]
+            if (feetSearchGridPoints[i]["longitude"] > maxXPt):
+                maxXPt = feetSearchGridPoints[i]["longitude"]
+            if (feetSearchGridPoints[i]["latitude"] < minYPt):
+                minYPt = feetSearchGridPoints[i]["latitude"];
+            if (feetSearchGridPoints[i]["longitude"] < minXPt):
+                minXPt = feetSearchGridPoints[i]["longitude"]
+        
+        cellWidth = maxXPt - minXPt
+        cellHeight = maxYPt - minYPt
+        
+        if (cellWidth < cellHeight):
+            numLoops = round(cellWidth / cameraWidth / 2) - 1
+        else:
+            numLoops = round(cellHeight / cameraWidth / 2) - 1
+        cellCenterX = (maxXPt - minXPt) / 2 + minXPt
+        cellCenterY = (maxYPt - minYPt) / 2 + minYPt
+        
+        
         for i in range(numLoops):
             for i in range(len(angles)):
                 if (inObstacle(curXPts[i] + cameraWidth * math.cos(angles[i]), curYPts[i] + cameraWidth * math.sin(angles[i]), feetStationaryObstacles) == -1):
+                    
                     xWayPts.append(curXPts[i] + cameraWidth * 2 * math.cos(angles[i]))
                     yWayPts.append(curYPts[i] + cameraWidth * 2 * math.sin(angles[i]))
+                    
+                    
                 else:
                     angleToPrev = calcAngle(curXPts[i] + cameraWidth * math.cos(angles[i]), curYPts[i] + cameraWidth * math.sin(angles[i]), curXPts[i-1], curYPts[i-1])
                     
@@ -397,6 +432,10 @@ def createPoints(mode, feetSearchGridPoints, numLoops, feetStationaryObstacles, 
                     
                     xWayPts.append(testPtX)
                     yWayPts.append(testPtY)
+                    
+                    
+                    
+                    
                     
                     angleToNext = calcAngle(curXPts[i] + cameraWidth * math.cos(angles[i]), curYPts[i] + cameraWidth * math.sin(angles[i]), curXPts[(i + 1) % len(curXPts)] + cameraWidth * math.cos(angles[(i+1)%len(angles)]), curYPts[(i+1)%len(curYPts)] + cameraWidth * math.sin(angles[(i+1)%len(angles)]))
                     
@@ -475,7 +514,7 @@ def convertDataToFeet(searchGridPoints, stationaryObstacles):
 constAlt = 120
 cameraWidth = 130
 inputFile = "../../../mission_plan/interop_example.json"
-numLoops = [1, 1, 1]
+numLoops = [0, 0, 1]
 
 #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
 
@@ -633,19 +672,16 @@ gridHeight = maxYGrid - minYGrid
 
 # variables to edit based on the physical plane
 
-startPosX = minX + (random.random() * (maxXSearch - minX))
-startPosY = minY + (random.random() * (maxYSearch - minY))
-
-
 
 xWayPts = []
 yWayPts = []
 altWayPts = []
 
+maxLon = feetSearchGridPoints[0]["longitude"]
 for i in range(len(feetSearchGridPoints)):
-    dist = math.sqrt(math.pow(feetSearchGridPoints[i]["longitude"] - startPosX, 2) + math.pow(feetSearchGridPoints[i]["latitude"] - startPosY, 2))
-    if (dist < minDist):
-        minDist = dist
+    curLon = feetSearchGridPoints[i]["longitude"]
+    if (curLon > maxLon):
+        maxLon = curLon
         minDistInd = i
 
 feetSearchGridPoints.pop()
@@ -658,10 +694,6 @@ for i in range(len(numLoops)):
     createPoints(2, cells[i-1].searchPts, numLoops[i], feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
 
 wayPts = []
-
-xWayPts.append(2000)
-yWayPts.append(500)
-altWayPts.append(constAlt)
 
 for i in range(len(xWayPts)):
     if (inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles) != -1):    
@@ -680,13 +712,6 @@ with open(filepath, "w") as file:
 xGridPts = []
 yGridPts = []
 
-# actual size points
-lonGridPts = []
-latGridPts = []
-
-latWayPts = []
-lonWayPts = []
-
 # obstacle points
 
 
@@ -694,9 +719,6 @@ for pt in feetSearchGridPoints:
     yGridPts.append(pt["latitude"])
     xGridPts.append(pt["longitude"])
     
-for i in range(len(xWayPts)):
-    latWayPts.append(wayPts[i]["latitude"])
-    lonWayPts.append(wayPts[i]["longitude"])
 
 plt.figure(figsize = [5, 5])
 ax = plt.axes([0.1, 0.1, 0.8, 0.8], xlim=(minXGrid, maxXGrid), ylim=(minYGrid, maxYGrid))
