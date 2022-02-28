@@ -229,15 +229,15 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
     run_y = run_start_xy[1] - run_end_xy[1]
     run_axis = [run_x / np.sqrt(run_x**2 + run_y**2), run_y / np.sqrt(run_x**2 + run_y**2)]
 
-    START_GUESS = 1000
-    STEP_SIZE = 0.5
+    START_GUESS = 10000
+    STEP_SIZE = 0.1
 
     max_path = [[run_axis[i] * START_GUESS + run_end_xy[i] for i in range(2)], run_end_xy]
     glide_path = max_path
 
     while check_path_intersection(map, obstacles, glide_path):
-        glide_path[0][0] += run_axis[0] * STEP_SIZE
-        glide_path[0][1] += run_axis[1] * STEP_SIZE
+        glide_path[0][0] -= run_axis[0] * STEP_SIZE
+        glide_path[0][1] -= run_axis[1] * STEP_SIZE
         print(glide_path)
 
     glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=math.dist(glide_path[0], glide_path[1]))
@@ -291,6 +291,6 @@ if __name__ == "__main__":
         obstacles += [[obstacle["latitude"],
                         obstacle["longitude"], obstacle["radius"]]]
 
-    map = Map(1, boundarypoints, obstacles, 0)
+    map = Map(10, boundarypoints, obstacles, 0)
     print(len(map.obstacle_map))
     print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 15))
