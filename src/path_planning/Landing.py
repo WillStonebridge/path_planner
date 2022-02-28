@@ -73,15 +73,18 @@ def find_triangle_area(circle, line):
     return (s * (s - a) * (s - b) * (s - c)) ** 0.5
 
 def check_path_intersection(map, obstacles, line):
-    line_0_x = max(0, int(line[0][0])) 
-    line_0_x = min(len(map.obstacle_map)-1, line_0_x)
-    line_0_y = max(0, int(line[0][1]))
-    line_0_y = min(len(map.obstacle_map[0])-1, line_0_y)
+    line_0_x = int(map.transform_to_map_index(line[0][0]))
+    line_0_y = int(map.transform_to_map_index(line[0][1]))
     
     print(line_0_x)
     print(line_0_y)
-    
+
+    if line_0_x < 0 or line_0_x > len(map.obstacle_map)-1 or line_0_y < 0 or line_0_y > len(map.obstacle_map)-1: 
+        print("case 1")
+        return True
+
     if map.obstacle_map[line_0_x][line_0_y]:
+        print("case 2")
         return True
     '''
     for circle in obstacles:  # iterates through every obstacle
@@ -120,7 +123,7 @@ def check_path_intersection(map, obstacles, line):
         """
         if find_triangle_area(circle, intercept_line) > find_triangle_area(circle, line):
             return True
-        '''
+    ''' 
     # returns false if no intersections are detected
     return False
 
@@ -229,16 +232,24 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
     run_y = run_start_xy[1] - run_end_xy[1]
     run_axis = [run_x / np.sqrt(run_x**2 + run_y**2), run_y / np.sqrt(run_x**2 + run_y**2)]
 
-    START_GUESS = 10000
-    STEP_SIZE = 0.1
+    START_GUESS = 1000
+    STEP_SIZE = 50
 
     max_path = [[run_axis[i] * START_GUESS + run_end_xy[i] for i in range(2)], run_end_xy]
     glide_path = max_path
 
+    print(run_start_xy)
+    print(glide_path)
     while check_path_intersection(map, obstacles, glide_path):
         glide_path[0][0] -= run_axis[0] * STEP_SIZE
         glide_path[0][1] -= run_axis[1] * STEP_SIZE
         print(glide_path)
+
+    glide_path[0][0] -= run_axis[0] * STEP_SIZE
+    glide_path[0][1] -= run_axis[1] * STEP_SIZE
+    if check_path_intersection(map, obstacles, glide_path):
+        glide_path[0][0] += run_axis[0] * STEP_SIZE
+        glide_path[0][1] += run_axis[1] * STEP_SIZE
 
     glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=math.dist(glide_path[0], glide_path[1]))
 
