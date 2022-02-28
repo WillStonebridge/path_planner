@@ -1,6 +1,9 @@
 import numpy as np
 import math
 import matplotlib.path as mpath
+import json
+
+from Mapping import Map
 
 # returns the angle from 1 to 2 in rads
 def find_line_angle(line):
@@ -58,7 +61,7 @@ def find_midpoint(line):
 # TODO properly ref circle, atm circle = [[x,y], radius]
 def find_triangle_area(circle, line):
     # gets the center of the circle
-    circle_center = circle[0]
+    circle_center = circle[:2]
 
     # herons formula is used to calculate area
     a = math.dist(line[0], circle_center)
@@ -70,18 +73,26 @@ def find_triangle_area(circle, line):
     return (s * (s - a) * (s - b) * (s - c)) ** 0.5
 
 def check_path_intersection(map, obstacles, line):
-    if not map.obstacle_map[line[0][0]][line[0][1]] or not map.obstacle_map[line[1][0]][line[1][1]]:
+    line_0_x = max(0, int(line[0][0])) 
+    line_0_x = min(len(map.obstacle_map)-1, line_0_x)
+    line_0_y = max(0, int(line[0][1]))
+    line_0_y = min(len(map.obstacle_map[0])-1, line_0_y)
+    
+    print(line_0_x)
+    print(line_0_y)
+    
+    if map.obstacle_map[line_0_x][line_0_y]:
         return True
-
+    '''
     for circle in obstacles:  # iterates through every obstacle
 
         # gets the parameters of the circle
-        circle_center = [circle[0], circle[1]]
+        circle_center = circle[:2]
         radius = circle[2]
 
         # gets the parameters of the line
         line_angle = find_line_angle(line)
-        line_length = math.dist(line)
+        line_length = math.dist(line[0], line[1])
         line_midpoint = find_midpoint(line)
 
         # Extra check to see if either point of the line is within the circle
@@ -90,7 +101,7 @@ def check_path_intersection(map, obstacles, line):
                 return True
 
         # creates a line from the circle center to the line's midpoint
-        center_midpoint_line = [circle[0], line_midpoint]
+        center_midpoint_line = [circle_center, line_midpoint]
         angleCML = find_line_angle(center_midpoint_line)
 
         # creates a projection of the line with the midpoint at the circle center
@@ -109,10 +120,11 @@ def check_path_intersection(map, obstacles, line):
         """
         if find_triangle_area(circle, intercept_line) > find_triangle_area(circle, line):
             return True
-
+        '''
     # returns false if no intersections are detected
     return False
 
+"""
 def convert_obstacles(map):
     obstacles_lat_long = map.obstacles
 
@@ -131,7 +143,7 @@ def convert_obstacles(map):
         obstacles.append(obstacle)
 
     return obstacles
-
+"""
 """
 -inputs-
 runway: [startpoint, endpoint], the cartesian coords of the start and end of the runway
@@ -204,27 +216,29 @@ def calc_descent(alt_final, alt_initial=None, dist=None, theta=None):
     else:
         return 0
 
-def calc_landing(map, start_pos, runway, max_angle):
-    start_alt = start_pos["altitude"]
+def calc_landing(map, obstacles, start_pos, runway, max_angle):
+    start_alt = start_pos[2]
 
     run_start = runway[0]
     run_end = runway[1]
 
-    run_start_xy = map.decimal_to_cartesian(run_start["latitude"], run_start["longitude"], map.min_lat, map.min_lon)
-    run_end_xy = map.decimal_to_cartesian(run_end["latitude"], run_end["longitude"], map.min_lat, map.min_lon)
+    run_start_xy = list(map.decimal_to_cartesian(run_start[0], run_start[1], map.min_lat, map.min_lon))
+    run_end_xy = list(map.decimal_to_cartesian(run_end[0], run_end[1], map.min_lat, map.min_lon))
 
     run_x = run_start_xy[0] - run_end_xy[0]
     run_y = run_start_xy[1] - run_end_xy[1]
     run_axis = [run_x / np.sqrt(run_x**2 + run_y**2), run_y / np.sqrt(run_x**2 + run_y**2)]
 
     START_GUESS = 1000
-    STEP_SIZE = 10
+    STEP_SIZE = 0.5
 
-    max_path = [run_axis * START_GUESS + run_end_xy, run_end_xy]
+    max_path = [[run_axis[i] * START_GUESS + run_end_xy[i] for i in range(2)], run_end_xy]
     glide_path = max_path
 
-    while not check_path_intersection(map, map.obstacle_map, glide_path):
-        glide_path[0] -= run_axis * STEP_SIZE
+    while check_path_intersection(map, obstacles, glide_path):
+        glide_path[0][0] += run_axis[0] * STEP_SIZE
+        glide_path[0][1] += run_axis[1] * STEP_SIZE
+        print(glide_path)
 
     glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=math.dist(glide_path[0], glide_path[1]))
 
@@ -233,8 +247,7 @@ def calc_landing(map, start_pos, runway, max_angle):
     if (glide_angle > max_angle):
         glide_alt = calc_descent(alt_final=0, dist=math.dist(glide_path[0], glide_path[1]), theta=max_angle)
         radius = calc_descent(alt_final=glide_alt, alt_initial=start_alt, theta=max_angle)
-        obstacles = convert_obstacles(map)
-        correction_point = find_correction_point(runway, glide_path, radius, obstacles)
+        correction_point = find_correction_point(map, runway, glide_path, radius, obstacles)
 
     landing_coords = []
     if correction_point is not None:
@@ -251,5 +264,33 @@ def calc_landing(map, start_pos, runway, max_angle):
     glide_dict["longitude"] = glide_coords[1]
     glide_dict["altitude"] = glide_alt
     landing_coords.append(glide_dict)
+
+    td_dict = dict()
+    td_dict["latitude"] = run_end[0]
+    td_dict["longitude"] = run_end[1]
+    td_dict["altitude"] = 0
+    landing_coords.append(td_dict)
     
     return landing_coords
+
+if __name__ == "__main__":
+    file = json.load(open("mission_plan\interop_example.json", 'rb'))
+    waypoints = []
+    boundarypoints = []
+    obstacles = []
+    for waypoint in file["waypoints"]:
+            waypoints += [[waypoint["latitude"],
+                            waypoint["longitude"], waypoint["altitude"]]]
+
+    for boundarypoint in file['flyZones'][0]['boundaryPoints']:
+        boundarypoints += [[boundarypoint["latitude"],
+                            boundarypoint["longitude"]]]
+    boundarypoints.append(list(boundarypoints[0]))
+    
+    for obstacle in file["stationaryObstacles"]:
+        obstacles += [[obstacle["latitude"],
+                        obstacle["longitude"], obstacle["radius"]]]
+
+    map = Map(1, boundarypoints, obstacles, 0)
+    print(len(map.obstacle_map))
+    print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 15))
