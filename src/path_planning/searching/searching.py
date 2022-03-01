@@ -708,18 +708,15 @@ def runProgram(constAlt, cameraWidth, inputFile):
         else:
             curLonX, curLatX = cartesian_to_decimal(xWayPts[i], yWayPts[i], minLat, minLon)
             wayPts.append({"latitude" : curLatX, "longitude" : curLonX, "altitude" : altWayPts[i]})
-                    
+            '''
     filepath = "../../../mission_plan/searchpath.json"
     with open(filepath, "w") as file:
         json.dump(wayPts, file)
-    
-    
     # boundary points
     xGridPts = []
     yGridPts = []
     
     # obstacle points
-    
     
     for pt in feetSearchGridPoints:
         yGridPts.append(pt["latitude"])
@@ -750,7 +747,7 @@ def runProgram(constAlt, cameraWidth, inputFile):
     for i in range(len(xWayPts)):
         if (not inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)):
             print("Error: point " + str(i) + " in obstacle " + str(inObstacle(xWayPts[i], yWayPts[i], feetStationaryObstacles)))
-    
+   ''' 
     return wayPts
     
 def main():

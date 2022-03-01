@@ -8,8 +8,6 @@ import random
 import sys, getopt
 import json
 import time
-from tkinter.tix import Tree
-from xxlimited import new
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -346,6 +344,7 @@ def main(argv):
 
     
     obstacleList = []  # [x,y,size(radius)]
+    print(obstacleList)
 
     for i in range(len(x_list_obs)):
         obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10))
