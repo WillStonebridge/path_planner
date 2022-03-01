@@ -75,16 +75,11 @@ def find_triangle_area(circle, line):
 def check_path_intersection(map, obstacles, line):
     line_0_x = int(map.transform_to_map_index(line[0][0]))
     line_0_y = int(map.transform_to_map_index(line[0][1]))
-    
-    print(line_0_x)
-    print(line_0_y)
 
     if line_0_x < 0 or line_0_x > len(map.obstacle_map)-1 or line_0_y < 0 or line_0_y > len(map.obstacle_map)-1: 
-        print("case 1")
         return True
 
     if map.obstacle_map[line_0_x][line_0_y]:
-        print("case 2")
         return True
     '''
     for circle in obstacles:  # iterates through every obstacle
@@ -238,12 +233,9 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
     max_path = [[run_axis[i] * START_GUESS + run_end_xy[i] for i in range(2)], run_end_xy]
     glide_path = max_path
 
-    print(run_start_xy)
-    print(glide_path)
     while check_path_intersection(map, obstacles, glide_path):
         glide_path[0][0] -= run_axis[0] * STEP_SIZE
         glide_path[0][1] -= run_axis[1] * STEP_SIZE
-        print(glide_path)
 
     glide_path[0][0] -= run_axis[0] * STEP_SIZE
     glide_path[0][1] -= run_axis[1] * STEP_SIZE
@@ -303,5 +295,4 @@ if __name__ == "__main__":
                         obstacle["longitude"], obstacle["radius"]]]
 
     map = Map(10, boundarypoints, obstacles, 0)
-    print(len(map.obstacle_map))
-    print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 15))
+    print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 1))
