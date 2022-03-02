@@ -22,7 +22,7 @@ try:
 except ImportError:
     raise
 
-show_animation = True
+show_animation = False
 
 
 class RRTDubins(RRT):
@@ -41,7 +41,7 @@ class RRTDubins(RRT):
             self.yaw = yaw
             self.path_yaw = []
 
-    def __init__(self, start, goal, obstacle_list, rand_area, obstacle_map,map,
+    def __init__(self, start, goal, obstacle_list, rand_area, map,
                  goal_sample_rate=90,
                  max_iter=1000, max_radius = 70, min_radius = 50
                  ):
@@ -61,7 +61,7 @@ class RRTDubins(RRT):
         self.goal_sample_rate = goal_sample_rate
   
         self.obstacle_list = obstacle_list
-        self.obstacle_map = obstacle_map
+        self.obstacle_map = map.obstacle_map
         self.map = map
         self.max_radius = max_radius
         self.min_radius = min_radius
@@ -113,17 +113,7 @@ class RRTDubins(RRT):
                         last_index = self.search_best_goal_node()
                         
                         if last_index: 
-                            
-                            # print("Path Radius: " + str(self.radii[last_index]))
                             return self.generate_final_course(last_index)
-
-                    
-            
-            
-                
-            # if animation and i % 5 == 0:
-
-            #     self.draw_graph(rnd)
             
         if new_node:
             last_index = self.search_best_goal_node()
@@ -136,10 +126,6 @@ class RRTDubins(RRT):
                 
 
     def draw_graph(self, rnd=None):  # pragma: no cover
-        # plt.clf()
-        # # for stopping simulation with the esc key.
-        # plt.gcf().canvas.mpl_connect('key_release_event',
-        #         lambda event: [exit(0) if event.key == 'escape' else None])
         if rnd is not None:
             plt.plot(rnd.x, rnd.y, "^k")
 
@@ -152,7 +138,6 @@ class RRTDubins(RRT):
         plt.axis([0, 2000, 0, 2000])
         plt.grid(True)
         self.plot_start_goal_arrow()
-        #plt.pause(0.01)
 
     def plot_start_goal_arrow(self):  # pragma: no cover
         dubins_path_planning.plot_arrow(
@@ -161,18 +146,13 @@ class RRTDubins(RRT):
             self.end.x, self.end.y, self.end.yaw)
     
     def check_path(self, new_node):
-
        if new_node == None:
             return False
-        
-
-
        for i in range(len(new_node.path_x)):
             
             index_x = self.map.transform_to_map_index(new_node.path_x[i])
             index_y = self.map.transform_to_map_index(new_node.path_y[i])
             x = (self.check_boundary([round(index_x),round(index_y)]))
-
             if x == False:
                 return False
        return True
@@ -200,9 +180,7 @@ class RRTDubins(RRT):
         return new_node
     
     def check_boundary(self, point):
-        
         try:
-            
             if self.obstacle_map[point[0]][point[1]]:
                 return False
         except:
@@ -212,11 +190,9 @@ class RRTDubins(RRT):
 
 
     def calc_new_cost(self, from_node, to_node):
-
         _, _, _, _, course_length = dubins_path_planning.dubins_path_planning(
             from_node.x, from_node.y, from_node.yaw,
             to_node.x, to_node.y, to_node.yaw, self.curvature)
-
         return from_node.cost + course_length
 
     def get_random_node(self):
@@ -310,9 +286,6 @@ def main(argv):
 
     min = np.amin(boundarypoints, axis = 0)
     map = Map(10, boundarypoints, obstacles, 0)
-  
-    
-
 
     x_list_bound = []
     y_list_bound = []
@@ -324,7 +297,6 @@ def main(argv):
 
     x_list_way = []
     y_list_way = []
-
 
     for waypoint in waypoints:
         x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
@@ -344,19 +316,15 @@ def main(argv):
 
     
     obstacleList = []  # [x,y,size(radius)]
-    print(obstacleList)
 
     for i in range(len(x_list_obs)):
-        obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10))
-    map.calc_obstacle_map(obstacles,boundarypoints,0)
-    obstacle_map = map.obstacle_map
+        obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) # FIXME Redundant code; Mapping already does this 
 
-    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50
+    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init
     start_time = time.time()
-    blank = '['
-    for i in range(len(x_list_way)-1):
-        # print("Waypoint " + str(i))
+    blank = '[' #FIXME Why use strings when Dict exists?
 
+    for i in range(len(x_list_way)-1):
     # Set Initial parameters
         if i == 0:
             start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
@@ -365,13 +333,13 @@ def main(argv):
             start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
             goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
 
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],obstacle_map,map, max_iter=3000)
+        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
         #make area the max of the max y/x
         path = rrt_dubins.planning(animation=show_animation)
    
         index_list = []
 
-        for point in path:
+        for point in path: # FIXME again, this could be simply included in rrt_dubins
             index_x = map.transform_to_map_index(point[0])
             index_y = map.transform_to_map_index(point[1])
             index_list.append([index_x,index_y])
