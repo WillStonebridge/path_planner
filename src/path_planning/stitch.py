@@ -87,6 +87,7 @@ def main(argv):
     # 1. Run Abhi Coverage Path Plannign on interop example file
 
     searching_wp = searching.runProgram(constAlt, cameraWidth, inputFile) # List
+
     searching_list = []
     sx_list_way = []
     sy_list_way = [] 
@@ -99,6 +100,8 @@ def main(argv):
         sx_list_way.append(x)
         sy_list_way.append(y)
         sa_list_way.append(waypoint[2])
+    print(searching_list)
+
     print("Searching Generated")
 
     # 2. Run Paul Landing
@@ -134,6 +137,7 @@ def main(argv):
 
 # Searching Waypoints
     for i in range(len(sx_list_way)-1):
+        print(i)
         if i == 0:
             start = [sx_list_way[i], sy_list_way[i], np.deg2rad(0.0)]
             goal = [sx_list_way[i+1], sy_list_way[i+1], np.arctan2(sy_list_way[i+1]-sy_list_way[i],sx_list_way[i+1]-sx_list_way[i])]
@@ -141,7 +145,7 @@ def main(argv):
             start = [sx_list_way[i], sy_list_way[i], np.arctan2(sy_list_way[i]-sy_list_way[i-1],sx_list_way[i]-sx_list_way[i-1])]
             goal = [sx_list_way[i+1], sy_list_way[i+1], np.arctan2(sy_list_way[i+1]-sy_list_way[i],sx_list_way[i+1]-sx_list_way[i])]
 
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000, max_radius = 5, min_radius = 1) # FIXME RRTDUubins object should only be creaed once and ran once
+        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000, max_radius = 2, min_radius = 1) # FIXME RRTDUubins object should only be creaed once and ran once
         #make area the max of the max y/x
         path = rrt_dubins.planning()
 

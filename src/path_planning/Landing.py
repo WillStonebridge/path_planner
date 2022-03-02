@@ -70,9 +70,10 @@ def find_triangle_area(circle, line):
 
     s = (a + b + c) / 2
 
-    return (s * (s - a) * (s - b) * (s - c)) ** 0.5
+    return (s * (s - a) * (s - b) * (s - c)) ** 0.5 
 
 def check_path_intersection(map, obstacles, line):
+    #print(line)
     line_0_x = int(map.transform_to_map_index(line[0][0]))
     line_0_y = int(map.transform_to_map_index(line[0][1]))
 
@@ -232,8 +233,11 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
 
     max_path = [[run_axis[i] * START_GUESS + run_end_xy[i] for i in range(2)], run_end_xy]
     glide_path = max_path
-
+    j = 0 
     while check_path_intersection(map, obstacles, glide_path):
+        print(j)
+        j +=1
+        print(glide_path)
         glide_path[0][0] -= run_axis[0] * STEP_SIZE
         glide_path[0][1] -= run_axis[1] * STEP_SIZE
 
@@ -277,7 +281,7 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
     return landing_coords
 
 if __name__ == "__main__":
-    file = json.load(open("mission_plan\interop_example.json", 'rb'))
+    file = json.load(open("../../mission_plan/interop_example.json", 'rb'))
     waypoints = []
     boundarypoints = []
     obstacles = []
