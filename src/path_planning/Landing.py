@@ -78,20 +78,20 @@ def check_path_intersects(map, obstacles, line):
     line_1_x = int(map.transform_to_map_index(line[1][0]))
     line_1_y = int(map.transform_to_map_index(line[1][1]))
 
-    if line_0_x < 0 or line_0_x > len(map.obstacle_map)-1 or line_0_y < 0 or line_0_y > len(map.obstacle_map[0])-1: 
+    if line_0_x < 0 or line_0_x >= map.map_x_width or line_0_y < 0 or line_0_y >= map.map_y_width: 
         return True
 
-    if line_1_x < 0 or line_1_x > len(map.obstacle_map)-1 or line_1_y < 0 or line_1_y > len(map.obstacle_map[0])-1: 
+    if line_1_x < 0 or line_1_x >= map.map_x_width or line_1_y < 0 or line_1_y >= map.map_y_width: 
         return True
 
     if map.obstacle_map[line_0_x][line_0_y] or map.obstacle_map[line_1_x][line_1_y]:
         return True
-    '''
+    
     for circle in obstacles:  # iterates through every obstacle
 
         # gets the parameters of the circle
         circle_center = circle[:2]
-        radius = circle[2]
+        radius = circle[2] * 0.3048 #convert from feet to meters
 
         # gets the parameters of the line
         line_angle = find_line_angle(line)
@@ -123,30 +123,10 @@ def check_path_intersects(map, obstacles, line):
         """
         if find_triangle_area(circle, intercept_line) > find_triangle_area(circle, line):
             return True
-    ''' 
+    
     # returns false if no intersections are detected
     return False
 
-"""
-def convert_obstacles(map):
-    obstacles_lat_long = map.obstacles
-
-    obstacles = []
-
-    for x in obstacles_lat_long:
-        lat = x["latitude"]
-        lon = x["longitude"]
-        radius = x["radius"]
-
-        coord = map.decimal_to_cartesian(lat, lon, map.min_lat, map.min_lon)
-
-        obstacle = []
-        obstacle.append(coord[0], coord[1], radius)
-
-        obstacles.append(obstacle)
-
-    return obstacles
-"""
 """
 -inputs-
 runway: [startpoint, endpoint], the cartesian coords of the start and end of the runway
@@ -300,4 +280,4 @@ if __name__ == "__main__":
                         obstacle["longitude"], obstacle["radius"]]]
 
     map = Map(10, boundarypoints, obstacles, 0)
-    print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 8))
+    print(calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 1))
