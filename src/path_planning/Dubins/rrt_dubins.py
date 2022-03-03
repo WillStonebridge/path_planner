@@ -71,6 +71,8 @@ class RRTDubins(RRT):
 
         self.map = map
 
+        x,y = map.decimal_to_cartesian(map.max_lat,map.max_lon,map.min_lat,map.min_lon)
+
     
         
         self.waypoint_dict = waypoint_dict
@@ -84,8 +86,9 @@ class RRTDubins(RRT):
         self.radii = []
         self.curvature = 0
 
-        self.min_rand = self.map.min_lat
-        self.max_rand = self.map.min_lon
+        self.min_rand = 0
+        self.max_rand = round(max(x,y))
+        print(self.min_rand, self.max_rand)
 
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
@@ -245,6 +248,7 @@ class RRTDubins(RRT):
                             random.uniform(self.min_rand, self.max_rand),
                             random.uniform(-math.pi, math.pi)
                             )
+            
         else:  # goal point sampling
             rnd = self.Node(self.end.x, self.end.y, self.end.yaw)
 
