@@ -8,7 +8,6 @@ import random
 import sys, getopt
 import json
 import time
-from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -42,7 +41,7 @@ class RRTDubins(RRT):
             self.yaw = yaw
             self.path_yaw = []
 
-    def __init__(self, waypoint_dict, map,
+    def __init__(self, start, goal, obstacle_list, rand_area, map,
                  goal_sample_rate=90,
                  max_iter=1000, max_radius = 70, min_radius = 50
                  ):
@@ -55,70 +54,40 @@ class RRTDubins(RRT):
         randArea:Random Sampling Area [min,max]
 
         """
-
-
-
-        # self.start = self.Node(start[0], start[1], start[2])
-        # self.end = self.Node(goal[0], goal[1], goal[2])
-        # self.min_rand = rand_area[0]
-        # self.max_rand = rand_area[1]
-
+        self.start = self.Node(start[0], start[1], start[2])
+        self.end = self.Node(goal[0], goal[1], goal[2])
+        self.min_rand = rand_area[0]
+        self.max_rand = rand_area[1]
         self.goal_sample_rate = goal_sample_rate
   
-        # self.obstacle_list = obstacle_list
-        
+        self.obstacle_list = obstacle_list
         self.obstacle_map = map.obstacle_map
 
-        self.map = map
+
 
     
-        
-        self.waypoint_dict = waypoint_dict
-
-        self.start = self.Node(0,0,0)
-        self.goal = self.Node(0,0,0)
-
+        self.map = map
         self.max_radius = max_radius
         self.min_radius = min_radius
         self.radius = 0
         self.radii = []
         self.curvature = 0
-
-        self.min_rand = self.map.min_lat
-        self.max_rand = self.map.min_lon
-
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
         self.goal_xy_th = 0.5
         self.max_iter = max_iter
-        self.angle = 0
         self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
         # self.max_iter = round(((self.max_radius - self.min_radius)/5 + 1) * 100) 
 
-    def planning(self, start, goal, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
+    def planning(self, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
         """
         execute planning
 
         animation: flag for animation on or off
         """
-        x_start,y_start = self.map.decimal_to_cartesian(start['latitude'], start['longitude'],self.map.min_lat,self.map.min_lon)
-        x_end,y_end = self.map.decimal_to_cartesian(goal['latitude'], goal['longitude'],self.map.min_lat,self.map.min_lon)
-        
-        start_angle = self.angle
-
-        end_angle = np.arctan2(y_end-y_start,x_end-x_start)
-        self.angle = end_angle
-
-        self.start = self.Node(x_start, y_start, start_angle)
-        self.end = self.Node(x_end, y_end, end_angle)
-
-        # print("Start: ",end = '')
-        # print(self.start.x, self.start.y,self.start.yaw)
-        # print("End: ",end = '')
-        # print(self.end.x, self.end.y,self.end.yaw)
-
         last_index = False
         self.node_list = [self.start]
+        
         self.radius = self.max_radius
         self.curvature = 1/self.radius
         new_node = None
@@ -134,22 +103,18 @@ class RRTDubins(RRT):
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
 
-            
-         
-
             if temp_node:
                 index_x = self.map.transform_to_map_index(temp_node.x)
                 index_y = self.map.transform_to_map_index(temp_node.y)
   
                 #CHECK MAP
-                #Check path aint letting it pass
+            
                 if self.check_path(temp_node) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
                     self.radii.append(self.radius)
                     new_node = temp_node
 
                     if new_node:
-                        print(i)
                         last_index = self.search_best_goal_node()
                         
                         if last_index: 
@@ -165,11 +130,11 @@ class RRTDubins(RRT):
                 
                 
 
-    def draw_graph(self, obs, rnd=None):  # pragma: no cover
+    def draw_graph(self, rnd=None):  # pragma: no cover
         if rnd is not None:
             plt.plot(rnd.x, rnd.y, "^k")
 
-        for (ox, oy, size) in obs:
+        for (ox, oy, size) in self.obstacle_list:
             plt.plot(ox, oy, "ok", ms= size)
 
         plt.plot(self.start.x, self.start.y, "xr")
@@ -188,14 +153,11 @@ class RRTDubins(RRT):
     def check_path(self, new_node):
        if new_node == None:
             return False
-       
        for i in range(len(new_node.path_x)):
             
             index_x = self.map.transform_to_map_index(new_node.path_x[i])
             index_y = self.map.transform_to_map_index(new_node.path_y[i])
             x = (self.check_boundary([round(index_x),round(index_y)]))
-
-
             if x == False:
                 return False
        return True
@@ -313,7 +275,6 @@ def main(argv):
     obstacles = []
 
     waypoint_dict = file["waypoints"] #pass this
-    # print(waypoint_dict[0]['latitude'])
 
     for waypoint in file["waypoints"]:
             waypoints += [[waypoint["latitude"],
@@ -330,10 +291,8 @@ def main(argv):
         obstacles += [[obstacle["latitude"],
                         obstacle["longitude"], obstacle["radius"]]]
 
-    # min = np.amin(boundarypoints, axis = 0)
+    min = np.amin(boundarypoints, axis = 0)
     map = Map(10, boundarypoints, obstacles, 0)
-   
-
 
     x_list_bound = []
     y_list_bound = []
@@ -343,15 +302,15 @@ def main(argv):
         x_list_bound.append(boundary[0])
         y_list_bound.append(boundary[1])
 
-    # x_list_way = []
-    # y_list_way = []
+    x_list_way = []
+    y_list_way = []
 
-    # for waypoint in waypoints:
-    #     x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
-    #     x_list_way.append(x)
-    #     y_list_way.append(y)
+    for waypoint in waypoints:
+        x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
+        x_list_way.append(x)
+        y_list_way.append(y)
 
-    # # print(waypoints)
+    # print(waypoints)
     
     x_list_obs = []
     y_list_obs = []
@@ -365,41 +324,41 @@ def main(argv):
     
     obstacleList = []  # [x,y,size(radius)]
 
-    rrt_dubins = RRTDubins(waypoint_dict, map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
-
     for i in range(len(x_list_obs)):
         obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) # FIXME Redundant code; Mapping already does this 
    
-    # search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init
+    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init
     start_time = time.time()
     blank = '[' #FIXME Why use strings when Dict exists?
 
-    for i in range(len(waypoint_dict)-1):
+    for i in range(len(x_list_way)-1):
     # Set Initial parameters
-        # if i == 0:
-        #     start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
-        #     goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
-        # else:
-        #     start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
-        #     goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
+        if i == 0:
+            start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
+        else:
+            start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
+            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
+        
 
-        # rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
+
+        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
         #make area the max of the max y/x
-        path = rrt_dubins.planning(rrt_dubins.waypoint_dict[i], rrt_dubins.waypoint_dict[i+1], animation=show_animation)
+        path = rrt_dubins.planning(animation=show_animation)
    
         index_list = []
 
-        # for point in path: # FIXME again, this could be simply included in rrt_dubins
-        #     index_x = map.transform_to_map_index(point[0])
-        #     index_y = map.transform_to_map_index(point[1])
-        #     index_list.append([index_x,index_y])
-        #     lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
-        #     new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(altitude)}
-        #     blank += json.JSONEncoder().encode(new_point)
-        #     blank += ','
+        for point in path: # FIXME again, this could be simply included in rrt_dubins
+            index_x = map.transform_to_map_index(point[0])
+            index_y = map.transform_to_map_index(point[1])
+            index_list.append([index_x,index_y])
+            lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
+            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(altitude)}
+            blank += json.JSONEncoder().encode(new_point)
+            blank += ','
         
         if show_animation:  # pragma: no cover
-            rrt_dubins.draw_graph(obstacleList)
+            rrt_dubins.draw_graph()
             plt.plot([x for x in x_list_bound], [y for y in y_list_bound], 'b')
             plt.plot([x for (x, y,_) in path], [y for (x, y,_) in path], '-r')
             plt.grid(True)
