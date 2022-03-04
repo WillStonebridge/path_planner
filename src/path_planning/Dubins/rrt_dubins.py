@@ -23,7 +23,7 @@ try:
 except ImportError:
     raise
 
-show_animation = False
+show_animation = True
 
 
 class RRTDubins(RRT):
@@ -44,7 +44,7 @@ class RRTDubins(RRT):
 
     def __init__(self, waypoint_dict, map,
                  goal_sample_rate=90,
-                 max_iter=1000, max_radius = 70, min_radius = 50, altitude = 200
+                 max_iter=1000, altitude = 200
                  ):
 
         self.goal_sample_rate = goal_sample_rate
@@ -55,8 +55,6 @@ class RRTDubins(RRT):
         self.waypoint_dict = waypoint_dict
         self.start = self.Node(0,0,0)
         self.goal = self.Node(0,0,0)
-        self.max_radius = max_radius
-        self.min_radius = min_radius
         self.radius = 0
         self.radii = []
         self.curvature = 0
@@ -66,10 +64,9 @@ class RRTDubins(RRT):
         self.goal_xy_th = 0.5
         self.max_iter = max_iter
         self.angle = 0
-        self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
 
 
-    def planning(self, start, goal, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
+    def planning(self, start, goal, max_radius = 70, min_radius = 50, animation=True, search_until_max_iter=True):
         """
         execute planning
 
@@ -86,18 +83,20 @@ class RRTDubins(RRT):
         self.start = self.Node(x_start, y_start, start_angle)
         self.end = self.Node(x_end, y_end, end_angle)
 
+        iteration = round(self.max_iter / (round(((max_radius - min_radius)/5 + 1))))
+
         last_index = False
         self.node_list = [self.start]
-        self.radius = self.max_radius
+        self.radius = max_radius
         self.curvature = 1/self.radius
         new_node = None
         final_path = None
         path_dict_list = []
         
         for i in range(self.max_iter):
-            if i != 0 and i % self.iteration == 0:
+            if i != 0 and i % iteration == 0:
                 
-                self.radius = max(self.radius-5,self.min_radius)
+                self.radius = max(self.radius-5,min_radius)
                 self.curvature = 1/self.radius
             
             rnd = self.get_random_node()
