@@ -23,7 +23,7 @@ try:
 except ImportError:
     raise
 
-show_animation = True
+show_animation = False
 
 
 class RRTDubins(RRT):
@@ -58,14 +58,9 @@ class RRTDubins(RRT):
 
 
 
-        # self.start = self.Node(start[0], start[1], start[2])
-        # self.end = self.Node(goal[0], goal[1], goal[2])
-        # self.min_rand = rand_area[0]
-        # self.max_rand = rand_area[1]
 
         self.goal_sample_rate = goal_sample_rate
-  
-        # self.obstacle_list = obstacle_list
+
         
         self.obstacle_map = map.obstacle_map
 
@@ -88,7 +83,6 @@ class RRTDubins(RRT):
 
         self.min_rand = 0
         self.max_rand = round(max(x,y))
-        print(self.min_rand, self.max_rand)
 
         #if after some iterations cant find a path, make the radius smaller
         self.goal_yaw_th = np.deg2rad(1)
@@ -96,7 +90,7 @@ class RRTDubins(RRT):
         self.max_iter = max_iter
         self.angle = 0
         self.iteration = round(self.max_iter / (round(((self.max_radius - self.min_radius)/5 + 1))))
-        # self.max_iter = round(((self.max_radius - self.min_radius)/5 + 1) * 100) 
+
 
     def planning(self, start, goal, animation=True, search_until_max_iter=True, boundarypointslist=[],obstacleslist=[]):
         """
@@ -115,10 +109,6 @@ class RRTDubins(RRT):
         self.start = self.Node(x_start, y_start, start_angle)
         self.end = self.Node(x_end, y_end, end_angle)
 
-        # print("Start: ",end = '')
-        # print(self.start.x, self.start.y,self.start.yaw)
-        # print("End: ",end = '')
-        # print(self.end.x, self.end.y,self.end.yaw)
 
         last_index = False
         self.node_list = [self.start]
@@ -144,15 +134,12 @@ class RRTDubins(RRT):
                 index_x = self.map.transform_to_map_index(temp_node.x)
                 index_y = self.map.transform_to_map_index(temp_node.y)
   
-                #CHECK MAP
-                #Check path aint letting it pass
                 if self.check_path(temp_node) and self.check_boundary([round(index_x),round(index_y)]):
                     self.node_list.append(temp_node)
                     self.radii.append(self.radius)
                     new_node = temp_node
 
                     if new_node:
-                        print(i)
                         last_index = self.search_best_goal_node()
                         
                         if last_index: 
@@ -162,8 +149,6 @@ class RRTDubins(RRT):
             last_index = self.search_best_goal_node()
             
             if last_index: 
-                
-                # print("Path Radius: " + str(self.radii[last_index]))
                 return self.generate_final_course(last_index)
                 
                 
@@ -274,7 +259,6 @@ class RRTDubins(RRT):
         
         for i in final_goal_indexes:
             if self.node_list[i].cost == min_cost:
-                # print("Path Cost: " + str(self.node_list[i].cost))
                 return i
 
         return None
@@ -312,16 +296,10 @@ def main(argv):
             buffer = int(arg)
 
     file = json.load(open(mission_data, 'rb'))
-    waypoints = []
     boundarypoints = []
     obstacles = []
 
-    waypoint_dict = file["waypoints"] #pass this
-    # print(waypoint_dict[0]['latitude'])
-
-    for waypoint in file["waypoints"]:
-            waypoints += [[waypoint["latitude"],
-                                waypoint["longitude"], waypoint["altitude"]]]
+    waypoint_dict = file["waypoints"] 
 
     for boundarypoint in file['flyZones'][0]['boundaryPoints']:
         
@@ -334,73 +312,43 @@ def main(argv):
         obstacles += [[obstacle["latitude"],
                         obstacle["longitude"], obstacle["radius"]]]
 
-    # min = np.amin(boundarypoints, axis = 0)
+
     map = Map(10, boundarypoints, obstacles, 0)
-   
-
-
-    x_list_bound = []
-    y_list_bound = []
-
-    for boundary in boundarypoints:
-
-        x_list_bound.append(boundary[0])
-        y_list_bound.append(boundary[1])
-
-    # x_list_way = []
-    # y_list_way = []
-
-    # for waypoint in waypoints:
-    #     x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
-    #     x_list_way.append(x)
-    #     y_list_way.append(y)
-
-    # # print(waypoints)
+    rrt_dubins = RRTDubins(waypoint_dict, map, max_iter=3000) 
     
-    x_list_obs = []
-    y_list_obs = []
-    radiuses = []
 
-    for obstacle in obstacles:
-        x_list_obs.append(obstacle[0])
-        y_list_obs.append(obstacle[1])
-        radiuses.append(obstacle[2])
-
-    
-    obstacleList = []  # [x,y,size(radius)]
-
-    rrt_dubins = RRTDubins(waypoint_dict, map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
-
-    for i in range(len(x_list_obs)):
-        obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) # FIXME Redundant code; Mapping already does this 
+    if show_animation:
+        x_list_bound = []
+        y_list_bound = []
+        for boundary in boundarypoints:
+            x_list_bound.append(boundary[0])
+            y_list_bound.append(boundary[1])  
+        x_list_obs = [] 
+        y_list_obs = []
+        radiuses = []
+        for obstacle in obstacles:
+            x_list_obs.append(obstacle[0])
+            y_list_obs.append(obstacle[1])
+            radiuses.append(obstacle[2]) 
+        obstacleList = []
+        for i in range(len(x_list_obs)):
+            obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) 
    
-    # search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init
     start_time = time.time()
     blank = '[' #FIXME Why use strings when Dict exists?
 
     for i in range(len(waypoint_dict)-1):
-    # Set Initial parameters
-        # if i == 0:
-        #     start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
-        #     goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
-        # else:
-        #     start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
-        #     goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
 
-        # rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
-        #make area the max of the max y/x
         path = rrt_dubins.planning(rrt_dubins.waypoint_dict[i], rrt_dubins.waypoint_dict[i+1], animation=show_animation)
-   
         index_list = []
-
-        # for point in path: # FIXME again, this could be simply included in rrt_dubins
-        #     index_x = map.transform_to_map_index(point[0])
-        #     index_y = map.transform_to_map_index(point[1])
-        #     index_list.append([index_x,index_y])
-        #     lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
-        #     new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(altitude)}
-        #     blank += json.JSONEncoder().encode(new_point)
-        #     blank += ','
+        for point in path: # FIXME again, this could be simply included in rrt_dubins
+            index_x = map.transform_to_map_index(point[0])
+            index_y = map.transform_to_map_index(point[1])
+            index_list.append([index_x,index_y])
+            lat, long = map.cartesian_to_decimal(point[0],point[1],map.min_lat,map.min_lon)
+            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(altitude)}
+            blank += json.JSONEncoder().encode(new_point)
+            blank += ','
         
         if show_animation:  # pragma: no cover
             rrt_dubins.draw_graph(obstacleList)
