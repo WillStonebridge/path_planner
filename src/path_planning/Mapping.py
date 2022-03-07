@@ -21,8 +21,11 @@ class Map:
         """ 
 
         min = np.amin(boundarypoints, axis = 0)
+        max = np.amax(boundarypoints, axis =0)
         self.min_lat = min[0]
         self.min_lon = min[1]
+        self.max_lat = max[0]
+        self.max_lon = max[1]
 
         # transforms decimal coordinates to cartesian plane with (0,0) at (min_lat, min_lon)
         for point in boundarypoints:
@@ -167,7 +170,7 @@ def main(argumentList):
         searchGridPoints += [[search["latitude"],
                         search["longitude"]]]
 
-    print(waypoints)
+    #print(waypoints)
     map = Map(resolution, boundarypoints, obstacles, buffer)
     valid = []
     for x in range(len(map.obstacle_map)):
@@ -186,8 +189,9 @@ def main(argumentList):
         wp_x,wp_y = map.decimal_to_cartesian(waypoint[0], waypoint[1], map.min_lat, map.min_lon)
         wp_xi.append(round(map.transform_to_map_index(wp_x)))
         wp_yi.append(round(map.transform_to_map_index(wp_y)))
-        plt.text(round(map.transform_to_map_index(wp_x)),round(map.transform_to_map_index(wp_y)), str(i), fontsize=10)
-        i += 1
+        #if i % 10 == 0:
+        #    plt.text(round(map.transform_to_map_index(wp_x)),round(map.transform_to_map_index(wp_y)), str(i), fontsize=10)
+        #i += 1
 
     plt.plot(wp_xi,wp_yi)
     plt.grid(True)

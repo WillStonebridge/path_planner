@@ -65,7 +65,7 @@ def decimal_to_cartesian(lat1, lon1, lat2, lon2):
     y = d * math.sin(bearing)
     return x, y
 
-# END OF FUNCTIONS FROM LEONARD
+# END OF FUNCTIONS FROM LEONARD TODO use Mapping.py
 
 
 
@@ -346,7 +346,7 @@ def createPoints(mode, feetSearchGridPoints, numLoops, feetStationaryObstacles, 
                 
     if (mode == 2):
         angles = []
-        pt1y = feetSearchGridPoints[-2]["latitude"]
+        pt1y = feetSearchGridPoints[-2]["latitude"] # FIXME x should be lat, y should be lon!!!!!!!
         pt2y = feetSearchGridPoints[1]["latitude"]
         pt1x = feetSearchGridPoints[-2]["longitude"]
         pt2x = feetSearchGridPoints[1]["longitude"]
@@ -521,7 +521,8 @@ constAlt = 120
 cameraWidth = 130
 inputFile = "../../../mission_plan/interop_example.json"
 #numLoops = [0, 0, 3]
-def runProgram(constAlt, cameraWidth, inputFile):
+
+def runProgram(constAlt, cameraWidth, inputFile, animation=True): #TODO Add Buffer
     #cameraWidth = 2 * constAlt * math.tan(math.radians(fov / 2))
     
     # Import data from interop_example
@@ -584,15 +585,15 @@ def runProgram(constAlt, cameraWidth, inputFile):
     for i in tempSortedSearch:
         tempxgrid.append(i["longitude"])
         tempygrid.append(i["latitude"])
-    
-    plt.figure(1)
-    
-    
-    
-    plt.scatter(tempxgrid, tempygrid)
-    
-    for i in range(len(tempSortedSearch)):
-        plt.text(tempSortedSearch[i]["longitude"], tempSortedSearch[i]["latitude"], str(i))
+    if animation: 
+        plt.figure(1)
+        
+        
+        
+        plt.scatter(tempxgrid, tempygrid)
+        
+        for i in range(len(tempSortedSearch)):
+            plt.text(tempSortedSearch[i]["longitude"], tempSortedSearch[i]["latitude"], str(i))
         
     cells[0].addPt(intersectionPtUp(feetStationaryObstacles[0], feetSearchGridPoints))
     cells[0].addPt(intersectionPtDown(feetStationaryObstacles[0], feetSearchGridPoints))
@@ -650,7 +651,8 @@ def runProgram(constAlt, cameraWidth, inputFile):
     
     for i in cells:
         i.addStartPt()    
-        i.plot()
+        if animation:
+            i.plot()
         
     maxXGrid = maxXSearch
     maxYGrid = maxYSearch
@@ -697,7 +699,7 @@ def runProgram(constAlt, cameraWidth, inputFile):
     feetSearchGridPoints.append(feetSearchGridPoints[0])
     
     for i in range(len(cells)):
-        createPoints(2, cells[i-1].searchPts, 0, feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt)
+        createPoints(2, cells[i-1].searchPts, 0, feetStationaryObstacles, xWayPts, yWayPts, altWayPts, cameraWidth, constAlt) 
     
     wayPts = []
     
@@ -706,7 +708,7 @@ def runProgram(constAlt, cameraWidth, inputFile):
             #print("Point x:" + str(xWayPts[i] + ", y: " + str(yWayPts[i]) + " is in an obstacle"))
             print("oopsie")
         else:
-            curLonX, curLatX = cartesian_to_decimal(xWayPts[i], yWayPts[i], minLat, minLon)
+            curLatX, curLonX = cartesian_to_decimal(yWayPts[i], xWayPts[i], minLat, minLon) # FIXME Change after fix on Line 349
             wayPts.append({"latitude" : curLatX, "longitude" : curLonX, "altitude" : altWayPts[i]})
             '''
     filepath = "../../../mission_plan/searchpath.json"

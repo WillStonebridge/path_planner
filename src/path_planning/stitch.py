@@ -1,38 +1,43 @@
 import json
-import sys, os
+import sys
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/Dubins")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/Dubins")
 
 from Mapping import Map
 from rrt_dubins import RRTDubins
 from searching import searching
-import numpy as np
-
+import Landing
 
 # Get interop file and object
 
 # SET CONSTANTS
+show_animation = False
+
 def main(argv):
 
     # constants
     constAlt = 100
     cameraWidth = 130
     inputFile = "../../mission_plan/interop_example.json"
+    combinedFile = "../../mission_plan/combinedpath.json"
     outputFile = "../../mission_plan/routepath.json"
     max_angle = 15
     resolution = 10
-    buffer = 5
-
-    # interop points    
-    interop_file = open(inputFile, "r")
+    buffer = 10
     #runway_start = 
     #runway_end
-    
-    interopObj = json.load(interop_file)
-    routepathObj = interopObj
-    interop_file.close()
+
+    # interop points    
+    with open(inputFile, "r")as file:
+        interopObj = json.load(file)
+    routepathObj = dict(interopObj)
+    combinedWpObj = dict(routepathObj)
 
     waypoints = []
     boundarypoints = []
@@ -51,126 +56,88 @@ def main(argv):
         obstacles += [[obstacle["latitude"],
                            obstacle["longitude"], obstacle["radius"]]]
 
-    min = np.amin(boundarypoints, axis = 0)
-    map = Map(10, boundarypoints, obstacles, 0)
-    x_list_bound = []
-    y_list_bound = []
-    for boundary in boundarypoints:
-        x_list_bound.append(boundary[0])
-        y_list_bound.append(boundary[1])
-    x_list_obs = []
-    y_list_obs = []
-    radiuses = []
-
-    x_list_way = []
-    y_list_way = []
-    wa_list_way = []
-
-    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init
-    blank = '[' #FIXME Why use strings when Dict exists?
-
-    for waypoint in waypoints:
-        x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
-        x_list_way.append(x)
-        y_list_way.append(y)
-        wa_list_way.append(waypoint[2])
-
-    for obstacle in obstacles:
-        x_list_obs.append(obstacle[0])
-        y_list_obs.append(obstacle[1])
-        radiuses.append(obstacle[2])
-    obstacleList = []  # [x,y,size(radius)]
-    for i in range(len(x_list_obs)):
-        obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) # FIXME Redundant code; Mapping already does this; also, what is this 10?
-    search_area = round(max(max(x_list_bound),max(y_list_bound))) + 50 # FIXME All of this could be included in the init; also, what is this 50?
+    map = Map(resolution, boundarypoints, obstacles, buffer)
+    if show_animation:
+        x_list_bound = []
+        y_list_bound = []
+        for boundary in boundarypoints:
+            x_list_bound.append(boundary[0])
+            y_list_bound.append(boundary[1])  
+        x_list_obs = [] 
+        y_list_obs = []
+        radiuses = []
+        for obstacle in obstacles:
+            x_list_obs.append(obstacle[0])
+            y_list_obs.append(obstacle[1])
+            radiuses.append(obstacle[2]) 
+        obstacleList = []
+        for i in range(len(x_list_obs)):
+            obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) 
+   
 
     # 1. Run Abhi Coverage Path Plannign on interop example file
-
-    searching_wp = searching.runProgram(constAlt, cameraWidth, inputFile) # List
-
-    searching_list = []
-    sx_list_way = []
-    sy_list_way = [] 
-    sa_list_way = []
-    for waypoint in searching_wp:
-            searching_list += [[waypoint["latitude"],
-                                waypoint["longitude"], waypoint["altitude"]]]
-    for waypoint in searching_list:
-        x,y = map.decimal_to_cartesian(waypoint[0],waypoint[1],min[0],min[1])
-        sx_list_way.append(x)
-        sy_list_way.append(y)
-        sa_list_way.append(waypoint[2])
-    print(searching_list)
-
+    searching_wp = searching.runProgram(constAlt, cameraWidth, inputFile, animation=False) # List
     print("Searching Generated")
 
     # 2. Run Paul Landing
-    landing_wp = [] # List
+    landing_wp = Landing.calc_landing(map, obstacles, waypoints[len(waypoints)-1], [waypoints[0], waypoints[1]], 8)
     print("Landing Generated")
+    # Combining intermediary Waypoints for logging (#TODO ADD Logging)
+
+    combinedWp =  []
+    combinedWp.extend(interopObj["waypoints"])
+    combinedWp.extend(searching_wp)
+    combinedWp.extend(landing_wp)
+    combinedWpObj["waypoints"] = combinedWp
+    with open(combinedFile, "w") as file:
+        json.dump(combinedWpObj, file)
+
+
+    # 3. Run Dubins
+    dubins_wp = []
+
+    # In-route Waypoints
+
+    dubins_planner = RRTDubins(map, max_iter=3000) 
     
-    # Run rrt_dubins
-
-# In-route Waypoints
-    for i in range(len(x_list_way)-1):
-        if i == 0:
-            start = [x_list_way[i], y_list_way[i], np.deg2rad(0.0)]
-            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
-        else:
-            start = [x_list_way[i], y_list_way[i], np.arctan2(y_list_way[i]-y_list_way[i-1],x_list_way[i]-x_list_way[i-1])]
-            goal = [x_list_way[i+1], y_list_way[i+1], np.arctan2(y_list_way[i+1]-y_list_way[i],x_list_way[i+1]-x_list_way[i])]
-
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000) # FIXME RRTDUubins object should only be creaed once and ran once
-        #make area the max of the max y/x
-        path = rrt_dubins.planning()
-
-        index_list = [] # FIXME Variable not used
-        j = 0
-        for point in path: # FIXME again, this could be simply included in rrt_dubins
-            index_x = map.transform_to_map_index(point[0])# FIXME Variable not used
-            index_y = map.transform_to_map_index(point[1])# FIXME Variable not used
-            index_list.append([index_x,index_y]) # FIXME Variable not used
-            lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
-            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(wa_list_way[j])}
-            blank += json.JSONEncoder().encode(new_point)
-            blank += ','
+    for i in range(len(interopObj["waypoints"])-1):
+        dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
     print("In Route RRT Dubins Found")
 
-# Searching Waypoints
-    for i in range(len(sx_list_way)-1):
-        print(i)
-        if i == 0:
-            start = [sx_list_way[i], sy_list_way[i], np.deg2rad(0.0)]
-            goal = [sx_list_way[i+1], sy_list_way[i+1], np.arctan2(sy_list_way[i+1]-sy_list_way[i],sx_list_way[i+1]-sx_list_way[i])]
-        else:
-            start = [sx_list_way[i], sy_list_way[i], np.arctan2(sy_list_way[i]-sy_list_way[i-1],sx_list_way[i]-sx_list_way[i-1])]
-            goal = [sx_list_way[i+1], sy_list_way[i+1], np.arctan2(sy_list_way[i+1]-sy_list_way[i],sx_list_way[i+1]-sx_list_way[i])]
-
-        rrt_dubins = RRTDubins(start, goal, obstacleList, [0, search_area],map, max_iter=3000, max_radius = 2, min_radius = 1) # FIXME RRTDUubins object should only be creaed once and ran once
-        #make area the max of the max y/x
-        path = rrt_dubins.planning()
-
-        index_list = [] #FIXME Variable not used
-        j = 0
-        for point in path: # FIXME again, this could be simply included in rrt_dubins
-            index_x = map.transform_to_map_index(point[0]) #FIXME Variable not used
-            index_y = map.transform_to_map_index(point[1]) #FIXME Variable not used
-            index_list.append([index_x,index_y]) #FIXME Variable not used
-            lat, long = map.cartesian_to_decimal(point[0],point[1],min[0],min[1])
-            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(sa_list_way[j])}
-            blank += json.JSONEncoder().encode(new_point)
-            blank += ','
+    # Searching Waypoints
+    for i in range(len(searching_wp)-1):
+        dubins_wp.extend(dubins_planner.planning(searching_wp[i], searching_wp[i+1], animation=show_animation, min_radius = 1, max_radius = 10))
 
     print("Searching RRT Dubins Found")
+    for i in range(len(landing_wp)-1):
+        dubins_wp.extend(dubins_planner.planning(landing_wp[i], landing_wp[i+1], animation=show_animation))
 
-    # Combine Lists
-    #outputList = []
-    #outputList.extend(searching_wp)
-    #outputList.extend(landing_wp)
+    print("Landing RRT Dubins Found")
+    if show_animation:
+        x_list_bound = []
+        y_list_bound = []
+        for boundary in boundarypoints:
+            x_list_bound.append(boundary[0])
+            y_list_bound.append(boundary[1])  
+        x_list_obs = [] 
+        y_list_obs = []
+        radiuses = []
+        for obstacle in obstacles:
+            x_list_obs.append(obstacle[0])
+            y_list_obs.append(obstacle[1])
+            radiuses.append(obstacle[2]) 
+        obstacleList = []
+        for i in range(len(x_list_obs)):
+            obstacleList.append((x_list_obs[i],y_list_obs[i],radiuses[i]/10)) 
+        dubins_planner.draw_graph(obstacleList)
+        plt.plot([x for x in x_list_bound], [y for y in y_list_bound], 'b')
+        plt.grid(True)
+        plt.show()
+    
 
     # Write dicitonary to JSON
-    
-    routepathObj["waypoints"].extend(outputList)
-
+    routepathObj["waypoints"] = 0
+    routepathObj["waypoints"] = dubins_wp
     with open(outputFile, "w") as file:
         json.dump(routepathObj, file)
     
