@@ -1,14 +1,10 @@
 import copy
-from importlib.resources import path
 import math
-from operator import index
 import os
-from pickle import TRUE
 import random
 import sys, getopt
 import json
 import time
-from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -42,7 +38,7 @@ class RRTDubins(RRT):
             self.yaw = yaw
             self.path_yaw = []
 
-    def __init__(self, waypoint_dict, map,
+    def __init__(self, map,
                  goal_sample_rate=90,
                  max_iter=1000, altitude = 200
                  ):
@@ -52,7 +48,6 @@ class RRTDubins(RRT):
         self.obstacle_map = map.obstacle_map
         self.map = map
         x,y = map.decimal_to_cartesian(map.max_lat,map.max_lon,map.min_lat,map.min_lon)
-        self.waypoint_dict = waypoint_dict
         self.start = self.Node(0,0,0)
         self.goal = self.Node(0,0,0)
         self.radius = 0
@@ -66,7 +61,7 @@ class RRTDubins(RRT):
         self.angle = 0
 
 
-    def planning(self, start, goal, max_radius = 70, min_radius = 50, animation=True, search_until_max_iter=True):
+    def planning(self, start, goal, max_radius = 70, min_radius = 50, animation=False, search_until_max_iter=True):
         """
         execute planning
 
@@ -98,6 +93,7 @@ class RRTDubins(RRT):
                 
                 self.radius = max(self.radius-5,min_radius)
                 self.curvature = 1/self.radius
+            print("radius (m): " + str(self.radius), end="\r")
             
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
@@ -128,12 +124,12 @@ class RRTDubins(RRT):
         
         for point in final_path: 
             lat, long = self.map.cartesian_to_decimal(point[0],point[1],self.map.min_lat,self.map.min_lon)
-            new_point = {'latitude': str(lat), 'longtitude':str(long), 'altitude':str(self.altitude)}
+            new_point = {'latitude': float(lat), 'longitude':float(long), 'altitude':float(self.altitude)}
             path_dict_list.append(new_point)
-
-            if show_animation:
+    
+            if animation:
                 plt.plot([x for (x, y,_) in final_path], [y for (x, y,_) in final_path], '-r')
-            
+        path_dict_list.reverse()         
         return path_dict_list
       
     def draw_graph(self, obs, rnd=None):  # pragma: no cover
@@ -296,7 +292,7 @@ def main(argv):
 
 
     map = Map(10, boundarypoints, obstacles, 0)
-    rrt_dubins = RRTDubins(waypoint_dict, map, max_iter=3000) 
+    rrt_dubins = RRTDubins(map, max_iter=3000) 
     
 
     if show_animation:
@@ -321,7 +317,7 @@ def main(argv):
 
     for i in range(len(waypoint_dict)-1):
 
-        complete_path.extend(rrt_dubins.planning(rrt_dubins.waypoint_dict[i], rrt_dubins.waypoint_dict[i+1], animation=show_animation))  
+        complete_path.extend(rrt_dubins.planning(waypoint_dict[i], waypoint_dict[i+1], animation=show_animation))  
         
         if show_animation:  # pragma: no cover
             rrt_dubins.draw_graph(obstacleList)
