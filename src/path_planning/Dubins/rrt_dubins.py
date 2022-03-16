@@ -255,7 +255,7 @@ class RRTDubins(RRT):
 def main(argv):
 
     altitude = 200
-    mission_data = "../../../mission_plan/interop_example.json"
+    mission_data = "../../../mission_plan/example/interop_example.json"
 
     options = "r:b:i:"
     long_options = ["file"]

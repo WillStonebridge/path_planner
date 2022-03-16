@@ -519,7 +519,7 @@ def convertDataToFeet(searchGridPoints, stationaryObstacles, minLat, minLon):
 
 constAlt = 120
 cameraWidth = 130
-inputFile = "../../../mission_plan/interop_example.json"
+inputFile = "../../../mission_plan/example/interop_example.json"
 #numLoops = [0, 0, 3]
 
 def runProgram(constAlt, cameraWidth, inputFile, animation=True): #TODO Add Buffer
