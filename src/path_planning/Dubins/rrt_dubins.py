@@ -40,11 +40,10 @@ class RRTDubins(RRT):
 
     def __init__(self, map,
                  goal_sample_rate=90,
-                 max_iter=1000, altitude = 200
+                 max_iter=1000, altitude = 200 #TODO remove altitude
                  ):
 
         self.goal_sample_rate = goal_sample_rate
-        self.altitude = altitude #FIXME altitude?
         self.obstacle_map = map.obstacle_map
         self.map = map
         x,y = map.decimal_to_cartesian(map.max_lat,map.max_lon,map.min_lat,map.min_lon)
@@ -75,8 +74,8 @@ class RRTDubins(RRT):
         end_angle = np.arctan2(y_end-y_start,x_end-x_start)
         self.angle = end_angle
 
-        self.start = self.Node(x_start, y_start, start_angle)
-        self.end = self.Node(x_end, y_end, end_angle)
+        self.start = self.Node(x_start, y_start, start_angle) #TODO pls no
+        self.end = self.Node(x_end, y_end, end_angle) # also no
 
         iteration = round(self.max_iter / (round(((max_radius - min_radius)/5 + 1))))
 
@@ -99,7 +98,7 @@ class RRTDubins(RRT):
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             temp_node = self.steer(self.node_list[nearest_ind], rnd)
             
-            if temp_node:
+            if temp_node: 
                 index_x = self.map.transform_to_map_index(temp_node.x)
                 index_y = self.map.transform_to_map_index(temp_node.y)
   
@@ -116,38 +115,43 @@ class RRTDubins(RRT):
                             break
                             
             
-        if new_node:
+        if new_node: 
             last_index = self.search_best_goal_node()
             
             if last_index: 
                 final_path = self.generate_final_course(last_index)
+ 
         fx = [point[0] for point in final_path] 
         fy = [point[1] for point in final_path] 
-        fyaw = [point[2] for point in final_path]
+        fyaw = [point[2] for point in final_path]        
         
         criticalx, criticaly = RRTDubins.calc_critical_nodes(fx, fy, fyaw)
-        print(f"critical length: {len(criticalx)}")
-        print(f"original length: {len(fx)}")
-        altList = [start['altitude'] * 0.3048] # ft to meters
-        pitch = self.calc_pitch(start['altitude'] * 0.3048, goal['altitude'] * 0.3048, criticalx, criticaly)
+        altList = [] # ft to meters
+        pitch = self.calc_pitch(start['altitude'], goal['altitude'], criticalx, criticaly)
+        #print('start: %.4f goal: %.4f pitch: %.4f'% (start['altitude'], goal['altitude'], pitch))
         i = 0 
         for point in zip(criticalx, criticaly): 
             lat, long = self.map.cartesian_to_decimal(point[0],point[1],self.map.min_lat,self.map.min_lon)
-            if i > 0:
-                altList.append(self.calc_altitude(pitch, fx[i - 1], fy[i-1], point[0], point[1], altList[i - 1]))
+            if i == 0:
+                altList.append(start['altitude'] * 0.3048)
+            else:
+                altList.append(self.calc_altitude(
+                                                  pitch, 
+                                                  criticalx[i - 1], criticaly[i-1], 
+                                                  point[0], point[1], 
+                                                  altList[i - 1]))
             altitude = altList[i]
+            #print("altitude: %.2f" % (altitude / 0.3048))
             new_point = {'latitude': float(lat), 'longitude':float(long), 'altitude':float(altitude)} 
             path_dict_list.append(new_point)
             i += 1
             if animation:
                 plt.plot([x for x in criticalx], [y for y in criticaly], 'g-x')
-
-        path_dict_list.reverse()         
         return path_dict_list
 
     def calc_pitch(self, startalt, goalalt, fx, fy):
         dalt = (goalalt - startalt) 
-        x = np.diff(fx)
+        x = np.diff(fx) 
         y = np.diff(fy)
         distance = 0
         for dx, dy in zip(x,y):
@@ -156,9 +160,8 @@ class RRTDubins(RRT):
       
     def calc_altitude(self, pitch, sx, sy, gx, gy, startalt):
         dx = gx - sx
-        dy = gy -sy
-
-        return round(math.hypot(dx,dy) * math.tan(pitch),2) *0.3048 + startalt
+        dy = gy - sy
+        return round(math.hypot(dx,dy) * math.tan(pitch),2) * 0.3048 + startalt
 
 
     def calc_critical_nodes(xlist, ylist, yawlist):
@@ -168,10 +171,12 @@ class RRTDubins(RRT):
            if i == 0:
                cx.append(x)
                cy.append(y)
-           else:
+           elif i % 5 == 0:
                if round(yawlist[i],1) != round(yawlist[i-1], 1):
                    cx.append(x)
                    cy.append(y)
+        cx.append(xlist[-1])
+        cy.append(ylist[-1])
         return cx, cy
 
     def draw_graph(self, obs, rnd=None):  # pragma: no cover
@@ -183,7 +188,8 @@ class RRTDubins(RRT):
 
         plt.plot(self.start.x, self.start.y, "xr")
         plt.plot(self.end.x, self.end.y, "xr")
-        
+        plt.text(self.start.x, self.start.y, "s") 
+        plt.text(self.end.x, self.end.y, "g") 
         plt.axis([0, 2000, 0, 2000])
         plt.grid(True)
         self.plot_start_goal_arrow()
@@ -291,6 +297,7 @@ class RRTDubins(RRT):
                 path.append([ix, iy,iyaw])
             node = node.parent
         path.append([self.start.x, self.start.y, self.start.yaw])
+        path.reverse()
         return path
 
 
@@ -319,7 +326,7 @@ def main(argv):
     obstacles = []
 
     waypoint_dict = file["waypoints"] 
-  for boundarypoint in file['flyZones'][0]['boundaryPoints']:
+    for boundarypoint in file['flyZones'][0]['boundaryPoints']:
         
         boundarypoints += [[boundarypoint["latitude"],
                             boundarypoint["longitude"]]]
@@ -355,7 +362,8 @@ def main(argv):
     start_time = time.time()
     complete_path = []
 
-    for i in range(len(waypoint_dict)-1):
+    #for i in range(len(waypoint_dict)-1):
+    for i in range(2):
 
         complete_path.extend(rrt_dubins.planning(waypoint_dict[i], waypoint_dict[i+1], animation=show_animation))  
         
@@ -367,8 +375,8 @@ def main(argv):
         
     elapsed_time = time.time() - start_time
     print(elapsed_time)
-    plt.show()   
+    if show_animation:
+        plt.show()   
 
  
-if __name__ == '__main__':
     main(sys.argv[1:])

@@ -3,7 +3,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import mavros_msgs.msg as mavros_msgs
+#import mavros_msgs.msg as mavros_msgs
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -19,6 +19,7 @@ import Landing
 
 # SET CONSTANTS
 show_animation = False
+
 
 def formatPolygon(polygon: dict) -> dict:
     '''
@@ -63,21 +64,21 @@ def formatMission(waypoints: dict, AMSLAltAboveTerrain=None, AltitudeMode=1) -> 
             "autoContinue": True,
             "command": None,
             "doJumpId": 0,
-            "frame": None,
+            "frame": 3, # mavros_msgs.Waypoint.NAV_FRAME_GLOBAL_REALTIVE_ALT
             "params": None,
             "type": "SimpleItem"
     }
     i = 0
     for waypoint in waypoints:
         if i == 0:
-            wp['command'] = mavros_msgs.CommandCode.NAV_TAKEOFF
+            wp['command'] = 22 #mavros_msgs.CommandCode.NAV_TAKEOFF
             wp['doJumpId'] = i + 1 
         elif i == len(waypoints) - 2:
-            wp['command'] = mavros_msgs.CommandCode.DO_LAND_START
+            wp['command'] = 189 #mavros_msgs.CommandCode.DO_LAND_START
             wp['doJumpId'] = i + 1
             wp['params'] = [0, 0, 0, 0, 0, 0, 0]
             item.append(wp.copy())
-            wp['command'] = mavros_msgs.CommandCode.NAV_WAYPOINT
+            wp['command'] = 16 #mavros_msgs.CommandCode.NAV_WAYPOINT
             wp['doDumpId'] = i + 2
             wp['Altitude'] = waypoint['altitude']
             wp['params'] = [0, 0, 0, 0, waypoint['latitude'], waypoint['longitude'], waypoint['altitude']]
@@ -85,10 +86,10 @@ def formatMission(waypoints: dict, AMSLAltAboveTerrain=None, AltitudeMode=1) -> 
             i += 1
             continue
         elif i == len(waypoints) - 1:
-            wp['command'] = mavros_msgs.CommandCode.NAV_LAND
+            wp['command'] = 21 #mavros_msgs.CommandCode.NAV_LAND
             wp['doJumpId'] = i + 2
         else: 
-            wp['command'] = mavros_msgs.CommandCode.NAV_WAYPOINT
+            wp['command'] = 16 #mavros_msgs.CommandCode.NAV_WAYPOINT
             wp['doJumpId'] = i + 1 
         wp['Altitude'] = waypoint['altitude']
         wp['params'] = [0, 0, 0, 0, waypoint['latitude'], waypoint['longitude'], waypoint['altitude']]
@@ -132,7 +133,6 @@ def formatPlanFile(routepath: dict) -> dict:
                                                   0
                                                   ]
     return planfile
-
 def main(argv):
 
     # constants
@@ -205,8 +205,8 @@ def main(argv):
     combinedWp.extend(searching_wp)
     combinedWp.extend(landing_wp)
     combinedWpObj["waypoints"] = combinedWp
-    with open(combinedFile, "w") as file:
-        json.dump(combinedWpObj, file)
+    #with open(combinedFile, "w") as file:
+    #    json.dump(combinedWpObj, file)
 
 
     # 3. Run Dubins
@@ -216,15 +216,15 @@ def main(argv):
 
     dubins_planner = RRTDubins(map, max_iter=3000) 
     
-    #for i in range(len(interopObj["waypoints"])-1):
-    #    dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
+    for i in range(len(interopObj["waypoints"]) - 1):
+        dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
     #print("In Route RRT Dubins Found")
 
     ## Searching Waypoints
-    #for i in range(len(searching_wp)-1):
-    #    dubins_wp.extend(dubins_planner.planning(searching_wp[i], searching_wp[i+1], animation=show_animation, min_radius = 1, max_radius = 10))
+    for i in range(len(searching_wp)-1):
+        dubins_wp.extend(dubins_planner.planning(searching_wp[i], searching_wp[i+1], animation=show_animation, min_radius = 1, max_radius = 10))
 
-    #print("Searching RRT Dubins Found")
+    print("Searching RRT Dubins Found")
     for i in range(len(landing_wp)-1):
         dubins_wp.extend(dubins_planner.planning(landing_wp[i], landing_wp[i+1], animation=show_animation))
 
@@ -255,6 +255,7 @@ def main(argv):
     routepathObj["waypoints"] = 0
     routepathObj["waypoints"] = dubins_wp
     mission_json = formatPlanFile(routepathObj)
+
     with open(outputFile, "w") as file:
         json.dump(routepathObj, file)
 

@@ -10,7 +10,7 @@ sys.path.append(
 
 from Mapping import Map
 
-show_animation = True
+show_animation = False
 class PathPlanner:
     """
     resolution: float meters between each vertex in the cardinal directions
@@ -137,6 +137,7 @@ class PathPlanner:
             plt.plot(fx, fy, 'g-s')
 
         pitch = self.calc_pitch(swaypoint[2], gwaypoint[2], fx, fy)
+        print(pitch)
         alt.append(swaypoint[2] * 0.3048)
         for i, (x,y) in enumerate(zip(fx, fy)):
             if i > 0:
@@ -144,7 +145,6 @@ class PathPlanner:
                 
         for i, (x,y) in enumerate(zip(fx, fy)):    
             fx[i], fy[i] = self.map.cartesian_to_decimal(x, y, self.map.min_lat, self.map.min_lon)
-                critical_points = []
         if len(self.path['waypoints']) > 0:
             fx.pop(0)
             fy.pop(0)
@@ -266,6 +266,9 @@ def main(argv):
                                     plan.map.transform_to_cart_position(x), 
                                     plan.map.transform_to_cart_position(y)
                                     ])
+        plt.grid(True)
+        plt.axis("equal")
+        plt.show()
         for node in invalid:
             plt.plot(node[0], node[1], '.k')
     with open(mission_data,'r') as file:
@@ -274,9 +277,6 @@ def main(argv):
     with open(out_file, 'w') as file:
         json.dump(interopObj, file) 
 
-    plt.grid(True)
-    plt.axis("equal")
-    plt.show()
 
 
 if __name__ == "__main__":
