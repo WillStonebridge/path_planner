@@ -10,6 +10,7 @@ sys.path.append(
 
 from Mapping import Map
 
+show_animation = True
 class PathPlanner:
     """
     resolution: float meters between each vertex in the cardinal directions
@@ -130,9 +131,10 @@ class PathPlanner:
         fy.reverse()
 
     # uncomment to plot paths
-        plt.plot(rx,ry, '-r')
-        plt.plot(cx,cy, '.b')
-        plt.plot(fx, fy, 'g-s')
+        if show_animation:
+            plt.plot(rx,ry, '-r')
+            plt.plot(cx,cy, '.b')
+            plt.plot(fx, fy, 'g-s')
 
         pitch = self.calc_pitch(swaypoint[2], gwaypoint[2], fx, fy)
         alt.append(swaypoint[2] * 0.3048)
@@ -142,6 +144,7 @@ class PathPlanner:
                 
         for i, (x,y) in enumerate(zip(fx, fy)):    
             fx[i], fy[i] = self.map.cartesian_to_decimal(x, y, self.map.min_lat, self.map.min_lon)
+                critical_points = []
         if len(self.path['waypoints']) > 0:
             fx.pop(0)
             fy.pop(0)
@@ -254,13 +257,17 @@ def main(argv):
         except IndexError:
             pass
 # uncomment to plot cartesian map
-    #invalid = []
-    #for x in range(len(plan.map.obstacle_map)):
-    #    for y in range(len(plan.map.obstacle_map[x])):
-    #        if plan.map.obstacle_map[x][y]:
-    #            invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
-    #for node in invalid:
-    #    plt.plot(node[0], node[1], '.k')
+    if show_animation:
+        invalid = []
+        for x in range(len(plan.map.obstacle_map)):
+            for y in range(len(plan.map.obstacle_map[x])):
+                if plan.map.obstacle_map[x][y]:
+                    invalid.append([
+                                    plan.map.transform_to_cart_position(x), 
+                                    plan.map.transform_to_cart_position(y)
+                                    ])
+        for node in invalid:
+            plt.plot(node[0], node[1], '.k')
     with open(mission_data,'r') as file:
         interopObj = json.load(file)
     interopObj['waypoints'] = plan.path['waypoints']

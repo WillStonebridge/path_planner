@@ -93,7 +93,7 @@ class RRTDubins(RRT):
                 
                 self.radius = max(self.radius-5,min_radius)
                 self.curvature = 1/self.radius
-            print("radius (m): " + str(self.radius), end="\r")
+            #print("radius (m): " + str(self.radius), end="\r")
             
             rnd = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
@@ -123,11 +123,15 @@ class RRTDubins(RRT):
                 final_path = self.generate_final_course(last_index)
         fx = [point[0] for point in final_path] 
         fy = [point[1] for point in final_path] 
+        fyaw = [point[2] for point in final_path]
         
+        criticalx, criticaly = RRTDubins.calc_critical_nodes(fx, fy, fyaw)
+        print(f"critical length: {len(criticalx)}")
+        print(f"original length: {len(fx)}")
         altList = [start['altitude'] * 0.3048] # ft to meters
-        pitch = self.calc_pitch(start['altitude'] * 0.3048, goal['altitude'] * 0.3048, fx, fy)
+        pitch = self.calc_pitch(start['altitude'] * 0.3048, goal['altitude'] * 0.3048, criticalx, criticaly)
         i = 0 
-        for point in final_path: 
+        for point in zip(criticalx, criticaly): 
             lat, long = self.map.cartesian_to_decimal(point[0],point[1],self.map.min_lat,self.map.min_lon)
             if i > 0:
                 altList.append(self.calc_altitude(pitch, fx[i - 1], fy[i-1], point[0], point[1], altList[i - 1]))
@@ -136,7 +140,7 @@ class RRTDubins(RRT):
             path_dict_list.append(new_point)
             i += 1
             if animation:
-                plt.plot([x for (x, y,_) in final_path], [y for (x, y,_) in final_path], '-r')
+                plt.plot([x for x in criticalx], [y for y in criticaly], 'g-x')
 
         path_dict_list.reverse()         
         return path_dict_list
@@ -155,6 +159,20 @@ class RRTDubins(RRT):
         dy = gy -sy
 
         return round(math.hypot(dx,dy) * math.tan(pitch),2) *0.3048 + startalt
+
+
+    def calc_critical_nodes(xlist, ylist, yawlist):
+        cx = []
+        cy = []
+        for i, (x, y) in enumerate(zip(xlist, ylist)):
+           if i == 0:
+               cx.append(x)
+               cy.append(y)
+           else:
+               if round(yawlist[i],1) != round(yawlist[i-1], 1):
+                   cx.append(x)
+                   cy.append(y)
+        return cx, cy
 
     def draw_graph(self, obs, rnd=None):  # pragma: no cover
         if rnd is not None:
@@ -270,9 +288,9 @@ class RRTDubins(RRT):
         node = self.node_list[goal_index]
         while node.parent:
             for (ix, iy,iyaw) in zip(reversed(node.path_x), reversed(node.path_y),reversed(node.path_yaw)):
-                path.append([ix, iy,iyaw*180/math.pi])
+                path.append([ix, iy,iyaw])
             node = node.parent
-        path.append([self.start.x, self.start.y, self.start.yaw*180/math.pi])
+        path.append([self.start.x, self.start.y, self.start.yaw])
         return path
 
 
@@ -280,7 +298,6 @@ def main(argv):
 
     altitude = 200
     mission_data = "../../../mission_plan/example/interop_example.json"
-
     options = "r:b:i:"
     long_options = ["file"]
     try:
@@ -302,8 +319,7 @@ def main(argv):
     obstacles = []
 
     waypoint_dict = file["waypoints"] 
-  
-    for boundarypoint in file['flyZones'][0]['boundaryPoints']:
+  for boundarypoint in file['flyZones'][0]['boundaryPoints']:
         
         boundarypoints += [[boundarypoint["latitude"],
                             boundarypoint["longitude"]]]
@@ -352,6 +368,7 @@ def main(argv):
     elapsed_time = time.time() - start_time
     print(elapsed_time)
     plt.show()   
+
  
 if __name__ == '__main__':
     main(sys.argv[1:])
