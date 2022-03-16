@@ -123,7 +123,6 @@ int main(int argc, char **argv)
         wp.x_lat          = route[i]["latitude"].GetFloat();
         wp.y_long         = route[i]["longitude"].GetFloat();
         wp.z_alt          = route[i]["altitude"].GetFloat();
-        wp.param4         = 1;
         wp_push_srv.request.waypoints.push_back(wp);
         ROS_INFO("\n Frame: %d\n Commmand: %d \n Is_current: %d \n autocontinue: %d \n lat: %.6f \n long: %.6f \n alt: %.6f\n", wp.frame, wp.command, wp.is_current, wp.autocontinue, wp.x_lat, wp.y_long, wp.z_alt);
 	}

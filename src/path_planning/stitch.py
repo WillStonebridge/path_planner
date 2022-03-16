@@ -100,15 +100,15 @@ def main(argv):
 
     dubins_planner = RRTDubins(map, max_iter=3000) 
     
-    for i in range(len(interopObj["waypoints"])-1):
-        dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
-    print("In Route RRT Dubins Found")
+    #for i in range(len(interopObj["waypoints"])-1):
+    #    dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
+    #print("In Route RRT Dubins Found")
 
-    # Searching Waypoints
-    for i in range(len(searching_wp)-1):
-        dubins_wp.extend(dubins_planner.planning(searching_wp[i], searching_wp[i+1], animation=show_animation, min_radius = 1, max_radius = 10))
+    ## Searching Waypoints
+    #for i in range(len(searching_wp)-1):
+    #    dubins_wp.extend(dubins_planner.planning(searching_wp[i], searching_wp[i+1], animation=show_animation, min_radius = 1, max_radius = 10))
 
-    print("Searching RRT Dubins Found")
+    #print("Searching RRT Dubins Found")
     for i in range(len(landing_wp)-1):
         dubins_wp.extend(dubins_planner.planning(landing_wp[i], landing_wp[i+1], animation=show_animation))
 

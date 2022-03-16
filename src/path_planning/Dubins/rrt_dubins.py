@@ -44,7 +44,7 @@ class RRTDubins(RRT):
                  ):
 
         self.goal_sample_rate = goal_sample_rate
-        self.altitude = altitude
+        self.altitude = altitude #FIXME altitude?
         self.obstacle_map = map.obstacle_map
         self.map = map
         x,y = map.decimal_to_cartesian(map.max_lat,map.max_lon,map.min_lat,map.min_lon)
@@ -121,17 +121,41 @@ class RRTDubins(RRT):
             
             if last_index: 
                 final_path = self.generate_final_course(last_index)
+        fx = [point[0] for point in final_path] 
+        fy = [point[1] for point in final_path] 
         
+        altList = [start['altitude'] * 0.3048] # ft to meters
+        pitch = self.calc_pitch(start['altitude'] * 0.3048, goal['altitude'] * 0.3048, fx, fy)
+        i = 0 
         for point in final_path: 
             lat, long = self.map.cartesian_to_decimal(point[0],point[1],self.map.min_lat,self.map.min_lon)
-            new_point = {'latitude': float(lat), 'longitude':float(long), 'altitude':float(self.altitude)}
+            if i > 0:
+                altList.append(self.calc_altitude(pitch, fx[i - 1], fy[i-1], point[0], point[1], altList[i - 1]))
+            altitude = altList[i]
+            new_point = {'latitude': float(lat), 'longitude':float(long), 'altitude':float(altitude)} 
             path_dict_list.append(new_point)
-    
+            i += 1
             if animation:
                 plt.plot([x for (x, y,_) in final_path], [y for (x, y,_) in final_path], '-r')
+
         path_dict_list.reverse()         
         return path_dict_list
+
+    def calc_pitch(self, startalt, goalalt, fx, fy):
+        dalt = (goalalt - startalt) 
+        x = np.diff(fx)
+        y = np.diff(fy)
+        distance = 0
+        for dx, dy in zip(x,y):
+            distance += math.hypot(dx, dy)
+        return math.atan(dalt / distance)
       
+    def calc_altitude(self, pitch, sx, sy, gx, gy, startalt):
+        dx = gx - sx
+        dy = gy -sy
+
+        return round(math.hypot(dx,dy) * math.tan(pitch),2) *0.3048 + startalt
+
     def draw_graph(self, obs, rnd=None):  # pragma: no cover
         if rnd is not None:
             plt.plot(rnd.x, rnd.y, "^k")
