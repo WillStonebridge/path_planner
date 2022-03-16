@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import mavros_msgs.msg as mavros_msgs
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -19,14 +20,129 @@ import Landing
 # SET CONSTANTS
 show_animation = False
 
+def formatPolygon(polygon: dict) -> dict:
+    '''
+    Accepts boundaryPoints from a flyZone object, returns a formatted polygon object
+    '''
+    formattedPolygon = {
+                        
+                         "inclusion": True,
+                         "polygon": [],
+                         "version":1
+                       }
+    for polygonItem in polygon:
+        formattedPolygon["polygon"].append([polygonItem["latitude"], polygonItem["longitude"]])
+    return formattedPolygon
+
+def formatCircle(stationaryObstacle: dict) -> dict:
+    '''
+    Accepts a circular obstacle, returns a formatted circle object
+    '''
+    ft2m = 0.3048
+    formattedCircle = {
+                        "circle" : {
+                            "center": [],
+                            "radius": 0
+                         },
+                         "inclusion": False,
+                         "version":1
+                       }
+    formattedCircle["circle"]["center"] = [stationaryObstacle["latitude"], stationaryObstacle["longitude"]]
+    formattedCircle["circle"]["radius"] = stationaryObstacle['radius'] * ft2m
+    return formattedCircle
+
+def formatMission(waypoints: dict, AMSLAltAboveTerrain=None, AltitudeMode=1) -> dict:
+    '''
+    Take waypoints, formats into QGC mission format
+    '''
+    item = []
+    wp = {
+            "AMSLAltAboveTerrain": AMSLAltAboveTerrain,
+            "Altitude": 0,
+            "AltitudeMode": 1,
+            "autoContinue": True,
+            "command": None,
+            "doJumpId": 0,
+            "frame": None,
+            "params": None,
+            "type": "SimpleItem"
+    }
+    i = 0
+    for waypoint in waypoints:
+        if i == 0:
+            wp['command'] = mavros_msgs.CommandCode.NAV_TAKEOFF
+            wp['doJumpId'] = i + 1 
+        elif i == len(waypoints) - 2:
+            wp['command'] = mavros_msgs.CommandCode.DO_LAND_START
+            wp['doJumpId'] = i + 1
+            wp['params'] = [0, 0, 0, 0, 0, 0, 0]
+            item.append(wp.copy())
+            wp['command'] = mavros_msgs.CommandCode.NAV_WAYPOINT
+            wp['doDumpId'] = i + 2
+            wp['Altitude'] = waypoint['altitude']
+            wp['params'] = [0, 0, 0, 0, waypoint['latitude'], waypoint['longitude'], waypoint['altitude']]
+            item.append(wp.copy())
+            i += 1
+            continue
+        elif i == len(waypoints) - 1:
+            wp['command'] = mavros_msgs.CommandCode.NAV_LAND
+            wp['doJumpId'] = i + 2
+        else: 
+            wp['command'] = mavros_msgs.CommandCode.NAV_WAYPOINT
+            wp['doJumpId'] = i + 1 
+        wp['Altitude'] = waypoint['altitude']
+        wp['params'] = [0, 0, 0, 0, waypoint['latitude'], waypoint['longitude'], waypoint['altitude']]
+        i += 1
+        item.append(wp.copy())
+    return item
+
+def formatPlanFile(routepath: dict) -> dict:
+    planfile = {
+                 "fileType": "Plan",
+                 "geoFence": {
+                     "circles": [],
+                      "polygons":[],
+                     "version": 2
+                     },
+                 "groundStation": "QGroundControl",
+                 "mission": {
+                     "cruiseSpeed": 15, 
+                     "firmwareType": 12, 
+                     "globalPlanAltitudeMode": 1,
+                     "hoverSpeed": 5,
+                     "items": [],
+                     "plannedHomePosition": [],
+                     "vehicleType": 1,
+                     "version":2
+                     },
+                 "rallyPoints": {
+                     "points": [],
+                     "version": 2
+                     },
+                 "version": 1
+               }
+    for polygon in routepath["flyZones"]:
+        planfile["geoFence"]["polygons"].append(formatPolygon(polygon["boundaryPoints"]))
+    for stationaryObstacle in routepath["stationaryObstacles"]:
+        planfile["geoFence"]["circles"].append(formatCircle(stationaryObstacle))
+    planfile["mission"]["items"] = formatMission(routepath['waypoints'])
+    planfile["mission"]["plannedHomePosition"] = [
+                                                  routepath['waypoints'][0]['latitude'], 
+                                                  routepath['waypoints'][0]['longitude'], 
+                                                  0
+                                                  ]
+    return planfile
+
 def main(argv):
 
     # constants
     constAlt = 100
     cameraWidth = 130
-    inputFile = "../../mission_plan/interop_example.json"
+    inputFile = "../../mission_plan/example/interop_example.json"
     combinedFile = "../../mission_plan/combinedpath.json"
-    outputFile = "../../mission_plan/routepath.json"
+    outputFile = "../../mission_plan/mavros_route.json"
+    qgcFile = "../../mission_plan/qgc_route.plan"
+
     max_angle = 15
     resolution = 10
     buffer = 10
@@ -138,8 +254,11 @@ def main(argv):
     # Write dicitonary to JSON
     routepathObj["waypoints"] = 0
     routepathObj["waypoints"] = dubins_wp
+    mission_json = formatPlanFile(routepathObj)
     with open(outputFile, "w") as file:
         json.dump(routepathObj, file)
-    
+
+    with open(qgcFile, "w") as file:
+        json.dump(mission_json, file)
 if __name__ == "__main__":
     main(sys.argv[1:])

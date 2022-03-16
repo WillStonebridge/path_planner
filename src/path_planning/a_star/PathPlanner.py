@@ -224,13 +224,10 @@ class PathPlanner:
         finaly.append(criticaly[len(criticaly) - 1])
         return finalx, finaly
     
-    def dump_path(self, filepath):
-        with open(filepath, "w") as file:
-            json.dump(self.path, file)
 
 def main(argv):
-    mission_data = "../../../mission_plan/interop_example.json"
-    out_file = "../../../mission_plan/routepath.json"
+    mission_data = "../../../mission_plan/example/interop_example.json"
+    out_file = "../../../mission_plan/a_star.json"
     resolution = 10
     buffer = 10
     
@@ -257,16 +254,21 @@ def main(argv):
         except IndexError:
             pass
 # uncomment to plot cartesian map
-    invalid = []
-    for x in range(len(plan.map.obstacle_map)):
-        for y in range(len(plan.map.obstacle_map[x])):
-            if plan.map.obstacle_map[x][y]:
-                invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
-    for node in invalid:
-        plt.plot(node[0], node[1], '.k')
+    #invalid = []
+    #for x in range(len(plan.map.obstacle_map)):
+    #    for y in range(len(plan.map.obstacle_map[x])):
+    #        if plan.map.obstacle_map[x][y]:
+    #            invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
+    #for node in invalid:
+    #    plt.plot(node[0], node[1], '.k')
+    with open(mission_data,'r') as file:
+        interopObj = json.load(file)
+    interopObj['waypoints'] = plan.path['waypoints']
+    with open(out_file, 'w') as file:
+        json.dump(interopObj, file) 
+
     plt.grid(True)
     plt.axis("equal")
-    plan.dump_path(out_file)
     plt.show()
 
 
