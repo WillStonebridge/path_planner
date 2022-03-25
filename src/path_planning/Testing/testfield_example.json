@@ -1,0 +1,51 @@
+{
+    "lostCommsPos": {
+        "latitude": 38.144778,
+        "longitude": -76.429417
+    },
+    "offAxisOdlcPos": {
+        "latitude": 38.145111,
+        "longitude": -76.427861
+    },
+    "stationaryObstacles": [
+    ],
+    "searchGridPoints": [
+    ],
+    "waypoints": [
+    ],
+    "airDropPos": {
+        "latitude": 38.1458416666667,
+        "longitude": -76.426375
+    },
+    "emergentLastKnownPos": {
+        "latitude": 38.145111,
+        "longitude": -76.427861
+    },
+    "ugvDrivePos": {
+        "latitude": 38.145103,
+        "longitude": -76.427856
+    },
+    "flyZones": [{
+        "altitudeMax": 750.0,
+        "altitudeMin": 100.0,
+        "boundaryPoints": [{
+                "latitude": 40.287793, 
+                "longitude": -86.851660
+            },
+            {
+                "latitude": 40.282048, 
+                "longitude": -86.851700
+            },
+            {
+                "latitude": 40.282061, 
+                "longitude": -86.847160
+            },
+            {
+                "latitude": 40.287626, 
+                "longitude": -86.847143
+            }
+
+        ]
+    }],
+    "id": 1
+}
