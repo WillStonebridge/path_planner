@@ -1,5 +1,5 @@
-mapping_directory = "../src/path_planning"
-interop_path = "../mission_plan/testfield_example.json"
+mapping_directory = "../src/path_planning" # - SET TO DIRECTORY WITH Mapping.py
+interop_path = "../mission_plan/testfield_example.json" # SET TO DIRECTORY WITH NEW INTEROP_EXAMPLE FILE
 min_obstacles = 5
 max_obstacles = 8
 min_obstacle_radius = 50
