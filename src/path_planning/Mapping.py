@@ -129,7 +129,7 @@ class Map:
                             break
     
 def main(argumentList):
-    mission_data = "../../mission_plan/interop_example.json"
+    mission_data = "../../mission_plan/example/interop_example.json"
     resolution = 10
     buffer = 0
 

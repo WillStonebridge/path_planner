@@ -64,13 +64,19 @@ def find_triangle_area(circle, line):
     circle_center = circle[:2]
 
     # herons formula is used to calculate area
-    a = math.dist(line[0], circle_center)
-    b = math.dist(line[1], circle_center)
-    c = math.dist(line[0], line[1])
+    a = distance(line[0], circle_center)
+    b = distance(line[1], circle_center)
+    c = distance(line[0], line[1])
 
     s = (a + b + c) / 2
 
     return (s * (s - a) * (s - b) * (s - c)) ** 0.5 
+
+def distance(p1: list, p2: list) -> float:
+    '''
+    Returns Euclidian Distance between two points 
+    '''
+    return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
 
 def check_path_intersects(map, obstacles, line):
     line_0_x = int(map.transform_to_map_index(line[0][0]))
@@ -95,12 +101,12 @@ def check_path_intersects(map, obstacles, line):
 
         # gets the parameters of the line
         line_angle = find_line_angle(line)
-        line_length = math.dist(line[0], line[1])
+        line_length = distance(line[0], line[1])
         line_midpoint = find_midpoint(line)
 
         # Extra check to see if either point of the line is within the circle
         for point in line:
-            if math.dist(point, circle_center) < radius:
+            if distance(point, circle_center) < radius:
                 return True
 
         # creates a line from the circle center to the line's midpoint
@@ -228,12 +234,12 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
         glide_path[0][0] += run_axis[0] * STEP_SIZE
         glide_path[0][1] += run_axis[1] * STEP_SIZE
 
-    glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=math.dist(glide_path[0], glide_path[1]))
+    glide_angle = calc_descent(alt_final=0, alt_initial=start_alt, dist=distance(glide_path[0], glide_path[1]))
 
     correction_point = None
     glide_alt = start_alt
     if (glide_angle > max_angle):
-        glide_alt = calc_descent(alt_final=0, dist=math.dist(glide_path[0], glide_path[1]), theta=max_angle)
+        glide_alt = calc_descent(alt_final=0, dist=distance(glide_path[0], glide_path[1]), theta=max_angle)
         radius = calc_descent(alt_final=glide_alt, alt_initial=start_alt, theta=20)
         correction_point = find_correction_point(map, runway, glide_path, radius, obstacles)
 
@@ -262,7 +268,7 @@ def calc_landing(map, obstacles, start_pos, runway, max_angle):
     return landing_coords
 
 if __name__ == "__main__":
-    file = json.load(open("../../mission_plan/interop_example.json", 'rb'))
+    file = json.load(open("../../mission_plan/example/interop_example.json", 'rb'))
     waypoints = []
     boundarypoints = []
     obstacles = []

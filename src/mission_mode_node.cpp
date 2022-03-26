@@ -98,7 +98,7 @@ int main(int argc, char **argv)
         float64 y_long
         float64 z_alt
     */
-    FILE* fp = fopen("/root/catkin_ws/src/path_planner/routepath.json", "r"); //  Reading waypoints from routepath json file 
+    FILE* fp = fopen("/root/catkin_ws/src/path_planner/mission_plan/mavros_route.json", "r"); //  Reading waypoints from routepath json file 
     char readBuffer[65536];
 	rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));  
 	rapidjson::Document d;
@@ -123,7 +123,6 @@ int main(int argc, char **argv)
         wp.x_lat          = route[i]["latitude"].GetFloat();
         wp.y_long         = route[i]["longitude"].GetFloat();
         wp.z_alt          = route[i]["altitude"].GetFloat();
-        wp.param4         = 1;
         wp_push_srv.request.waypoints.push_back(wp);
         ROS_INFO("\n Frame: %d\n Commmand: %d \n Is_current: %d \n autocontinue: %d \n lat: %.6f \n long: %.6f \n alt: %.6f\n", wp.frame, wp.command, wp.is_current, wp.autocontinue, wp.x_lat, wp.y_long, wp.z_alt);
 	}
@@ -140,7 +139,7 @@ int main(int argc, char **argv)
 
 // First WP of Landing Sequence (lining up w/ runway/decent route)
     wp.frame          = mavros_msgs::Waypoint::FRAME_GLOBAL_REL_ALT;
-    wp.command        = mavros_msgs::CommandCode::NAV_LOITER_TO_ALT;
+    wp.command        = mavros_msgs::CommandCode::NAV_WAYPOINT;
     wp.is_current     = false;
     wp.autocontinue   = true;
     wp.x_lat          = route[route.Size() - 2]["latitude"].GetFloat();

@@ -13,4 +13,4 @@ venv/
 *routepath.json
 *combinedpath.json
 
-
+mission_plan/*.json

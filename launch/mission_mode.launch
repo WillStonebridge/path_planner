@@ -1,10 +1,22 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="world" value= "$(find mission_mode)/worlds/cloud_jockeys.world"/>
+    <arg name="world" value= "$(find mission_mode)/worlds/empty.world"/>
     <arg name="vehicle" value= "plane"/>
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0"/>
     <include file="$(find px4)/launch/mavros_posix_sitl.launch">
         <arg name="world" value="$(arg world)"/>
         <arg name="vehicle" value= "$(arg vehicle)"/>
+        <arg name="x" value = "$(arg x)"/>
+        <arg name="y" value = "$(arg y)"/>
+        <arg name="z" value = "$(arg z)"/>
+        <arg name="R" value = "$(arg R)"/>
+        <arg name="P" value = "$(arg P)"/>
+        <arg name="Y" value = "$(arg Y)"/>
     </include>
     <!--node name="mission_mode" pkg="mission_mode" type="mission_mode_node" output="screen"/-->
 </launch>

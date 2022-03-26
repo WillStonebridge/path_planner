@@ -10,6 +10,7 @@ sys.path.append(
 
 from Mapping import Map
 
+show_animation = False
 class PathPlanner:
     """
     resolution: float meters between each vertex in the cardinal directions
@@ -130,11 +131,13 @@ class PathPlanner:
         fy.reverse()
 
     # uncomment to plot paths
-        plt.plot(rx,ry, '-r')
-        plt.plot(cx,cy, '.b')
-        plt.plot(fx, fy, 'g-s')
+        if show_animation:
+            plt.plot(rx,ry, '-r')
+            plt.plot(cx,cy, '.b')
+            plt.plot(fx, fy, 'g-s')
 
         pitch = self.calc_pitch(swaypoint[2], gwaypoint[2], fx, fy)
+        print(pitch)
         alt.append(swaypoint[2] * 0.3048)
         for i, (x,y) in enumerate(zip(fx, fy)):
             if i > 0:
@@ -224,13 +227,10 @@ class PathPlanner:
         finaly.append(criticaly[len(criticaly) - 1])
         return finalx, finaly
     
-    def dump_path(self, filepath):
-        with open(filepath, "w") as file:
-            json.dump(self.path, file)
 
 def main(argv):
-    mission_data = "../../../mission_plan/interop_example.json"
-    out_file = "../../../mission_plan/routepath.json"
+    mission_data = "../../../mission_plan/example/interop_example.json"
+    out_file = "../../../mission_plan/a_star.json"
     resolution = 10
     buffer = 10
     
@@ -257,17 +257,26 @@ def main(argv):
         except IndexError:
             pass
 # uncomment to plot cartesian map
-    invalid = []
-    for x in range(len(plan.map.obstacle_map)):
-        for y in range(len(plan.map.obstacle_map[x])):
-            if plan.map.obstacle_map[x][y]:
-                invalid.append([plan.map.transform_to_cart_position(x), plan.map.transform_to_cart_position(y)])
-    for node in invalid:
-        plt.plot(node[0], node[1], '.k')
-    plt.grid(True)
-    plt.axis("equal")
-    plan.dump_path(out_file)
-    plt.show()
+    if show_animation:
+        invalid = []
+        for x in range(len(plan.map.obstacle_map)):
+            for y in range(len(plan.map.obstacle_map[x])):
+                if plan.map.obstacle_map[x][y]:
+                    invalid.append([
+                                    plan.map.transform_to_cart_position(x), 
+                                    plan.map.transform_to_cart_position(y)
+                                    ])
+        plt.grid(True)
+        plt.axis("equal")
+        plt.show()
+        for node in invalid:
+            plt.plot(node[0], node[1], '.k')
+    with open(mission_data,'r') as file:
+        interopObj = json.load(file)
+    interopObj['waypoints'] = plan.path['waypoints']
+    with open(out_file, 'w') as file:
+        json.dump(interopObj, file) 
+
 
 
 if __name__ == "__main__":
