@@ -107,9 +107,9 @@ class Map:
     def calc_grid_bounds(self, boundarypoints):
         for boundarypoint in boundarypoints:
             if boundarypoint[0] > self.cart_max_x:
-                self.cart_max_x = boundarypoint[0]
+                self.cart_max_x = boundarypoint[0] - self.buffer
             if boundarypoint[1] > self.cart_max_y:
-                self.cart_max_y = boundarypoint[1]
+                self.cart_max_y = boundarypoint[1] - self.buffer
         self.map_y_width = round(self.cart_max_y / self.resolution)
         self.map_x_width = round(self.cart_max_x / self.resolution)
 

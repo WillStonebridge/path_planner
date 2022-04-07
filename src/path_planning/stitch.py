@@ -1,5 +1,6 @@
 import json
 import sys
+import getopt
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -82,6 +83,7 @@ def formatMission(waypoints: dict, AMSLAltAboveTerrain=None, AltitudeMode=1) -> 
             wp['doDumpId'] = i + 2
             wp['Altitude'] = waypoint['altitude']
             wp['params'] = [0, 0, 0, 0, waypoint['latitude'], waypoint['longitude'], waypoint['altitude']]
+            wp['frame'] = 2 #mavros_msgs.Waypoint.NAV_FRAME_GLOBAL
             item.append(wp.copy())
             i += 1
             continue
@@ -142,10 +144,27 @@ def main(argv):
     combinedFile = "../../mission_plan/combinedpath.json"
     outputFile = "../../mission_plan/mavros_route.json"
     qgcFile = "../../mission_plan/qgc_route.plan"
-
-    max_angle = 15
     resolution = 10
     buffer = 10
+
+    options = "r:b:i:o:"
+    long_options = ["file"]
+    try:
+        # Parsing argument
+        arguments, values = getopt.getopt(argv, options, long_options) 
+    except getopt.GetoptError:
+        print('Options:\n -i <inputfile> \n -r <resolution meters> -b <buffer meters>')
+        sys.exit(2)
+    for opt, arg in arguments:
+        if opt == '-i':
+            inputFile = arg
+        elif opt == '-r':
+            resolution = int(arg)
+        elif opt == '-b':
+            buffer = int(arg)
+        elif opt == '-o':
+            outputFile = int(arg)
+
     #runway_start = 
     #runway_end
 
@@ -217,8 +236,8 @@ def main(argv):
     dubins_planner = RRTDubins(map, max_iter=3000) 
     
     for i in range(len(interopObj["waypoints"]) - 1):
-        dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation))
-    #print("In Route RRT Dubins Found")
+        dubins_wp.extend(dubins_planner.planning(interopObj["waypoints"][i], interopObj["waypoints"][i+1], animation=show_animation, min_radius = 1, max_radius=50))
+    print("In Route RRT Dubins Found")
 
     ## Searching Waypoints
     for i in range(len(searching_wp)-1):

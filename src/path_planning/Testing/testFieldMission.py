@@ -1,13 +1,13 @@
-mapping_directory = "../src/path_planning" # - SET TO DIRECTORY WITH Mapping.py
-interop_path = "../mission_plan/testfield_example.json" # SET TO DIRECTORY WITH NEW INTEROP_EXAMPLE FILE
-min_obstacles = 5
-max_obstacles = 8
+mapping_directory = ".." # - SET TO DIRECTORY WITH Mapping.py
+interop_path = "../../../mission_plan/testfield_example.json" # SET TO DIRECTORY WITH NEW INTEROP_EXAMPLE FILE
+min_obstacles = 3
+max_obstacles = 3
 min_obstacle_radius = 50
-max_obstacle_radius = 100
-min_waypoints = 13
-max_waypoints = 17
-min_waypoint_altitude = 200
-max_waypoint_altitude = 400
+max_obstacle_radius = 55
+min_waypoints = 4
+max_waypoints = 10
+min_waypoint_altitude = 200 # feet?
+max_waypoint_altitude = 300
 min_searchpoints = 10
 max_searchpoints = 15
 USING_INTEROP_BOUNDARY = True
@@ -19,7 +19,7 @@ min_boundarypoints = 12
 max_boundarypoints = 16
 
 resolution = 10
-buffer = 30
+buffer = 50
     
 
 # Inputs
@@ -132,7 +132,11 @@ interop_file.close()
 
 
 if (not USING_INTEROP_BOUNDARY):
-    num_new_boundarypoints = random.randrange(min_boundarypoints, max_boundarypoints, 1)
+    if min_boundarypoints != max_boundarypoints:
+        num_new_boundarypoints = random.randrange(min_boundarypoints, max_boundarypoints, 1)
+    else: 
+        num_new_boundarypoints = min_boundarypoints
+
     new_boundarypoints = []
     new_boundarypoints_dict = []
     
@@ -180,7 +184,10 @@ print(str(emptyMap.map_y_width))
 print(str(maxGrid))
 
 # Create new obstacles
-num_new_obstacles = random.randrange(min_obstacles, max_obstacles, 1)
+if min_obstacles != max_obstacles:
+    num_new_obstacles = random.randrange(min_obstacles, max_obstacles, 1)
+else:
+    num_new_obstacles = min_obstacles
 new_obstacles = []
 
 while (len(new_obstacles) < num_new_obstacles):
@@ -225,7 +232,10 @@ maxGrid = newMap.map_x_width - 1
 
 
 # Create new waypoints
-num_new_waypoints = random.randrange(min_waypoints, max_waypoints, 1)
+if min_waypoints != max_waypoints:
+    num_new_waypoints = random.randrange(min_waypoints, max_waypoints, 1)
+else:
+    num_new_waypoints = min_waypoints
 new_waypoints = []
 
 while(len(new_waypoints) < num_new_waypoints):
@@ -307,9 +317,6 @@ for obstacle in new_searchpoints:
     new_searchpoint_dict.append({"latitude" : sp_lat, "longitude" : sp_lon})
 
 
-plt.grid(True)
-plt.axis("equal")
-plt.show()
 
 # Export to json file
 new_interop_example_obj = interop_example_obj
@@ -320,3 +327,7 @@ interop_example_obj["waypoints"] = new_waypoint_dict
 interop_output_file = open("new_interop_example.json", "w")
 json.dump(new_interop_example_obj, interop_output_file)
 interop_output_file.close()
+
+plt.grid(True)
+plt.axis("equal")
+plt.show()

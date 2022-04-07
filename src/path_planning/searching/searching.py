@@ -594,7 +594,6 @@ def runProgram(constAlt, cameraWidth, inputFile, animation=True): #TODO Add Buff
         
         for i in range(len(tempSortedSearch)):
             plt.text(tempSortedSearch[i]["longitude"], tempSortedSearch[i]["latitude"], str(i))
-        
     cells[0].addPt(intersectionPtUp(feetStationaryObstacles[0], feetSearchGridPoints))
     cells[0].addPt(intersectionPtDown(feetStationaryObstacles[0], feetSearchGridPoints))
     
