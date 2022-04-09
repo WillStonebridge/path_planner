@@ -134,6 +134,32 @@ def check_path_intersects(map, obstacles, line):
     return False
 
 """
+Start_pt: The initial point of the plane - [x, y], x and y are ints
+Center: The center of the circle along which the plane will loiter - [x, y], x and y are ints
+Radius: The radius of the loiter circle, this is the minimum turning radius - some cartesian distance integer
+
+Returns: tangPt [x, y] the point at which the plane can intercept the loitering circle on a tangent.
+"""
+def find_tangent_point(start_pt, center, radius):
+
+
+    angle_tangent = find_line_angle([center, start_pt])
+    angle_tangent += math.acos(radius / distance(start_pt, center))
+    tangPt = find_endpoint(center, angle_tangent, radius)
+
+    return tangPt
+
+
+if __name__ == "__main__":
+    start = [2, 5]
+    circle_center = [3, 3]
+    radius = 1
+
+    tangent = find_tangent_point(start, circle_center, radius)
+
+    print(tangent)
+
+"""
 -inputs-
 runway: [startpoint, endpoint], the cartesian coords of the start and end of the runway
 glideslope: point, the glideslope point that the robot is flying towards for final approach
